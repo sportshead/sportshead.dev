@@ -1,0 +1,233 @@
+---
+import { getCollection } from "astro:content";
+import Layout from "@layouts/Layout.astro";
+import Header from "@components/Header.astro";
+import Footer from "@components/Footer.astro";
+import LinkButton from "@components/LinkButton.astro";
+import Hr from "@components/Hr.astro";
+import Card from "@components/Card";
+import Socials from "@components/Socials.astro";
+import getSortedPosts from "@utils/getSortedPosts";
+import slugify from "@utils/slugify";
+import { SOCIALS } from "@config";
+import LBU from "../components/LinkButtonUnderlined.astro";
+
+const posts = await getCollection("blog");
+
+const sortedPosts = getSortedPosts(posts);
+const featuredPosts = sortedPosts.filter(({ data }) => data.featured);
+
+const socialCount = SOCIALS.filter((social) => social.active).length;
+---
+
+<Layout>
+  <Header />
+  <main id="main-content">
+    <section id="hero">
+      <h1 class="mr-2">sportshead(7)</h1>
+      <a target="_blank" href="/rss.xml" class="rss-link" aria-label="rss feed" title="RSS Feed">
+        <svg xmlns="http://www.w3.org/2000/svg" class="rss-icon"
+          ><path d="M19 20.001C19 11.729 12.271 5 4 5v2c7.168 0 13 5.832 13 13.001h2z"></path><path
+            d="M12 20.001h2C14 14.486 9.514 10 4 10v2c4.411 0 8 3.589 8 8.001z"></path><circle
+            cx="6"
+            cy="18"
+            r="2"></circle>
+        </svg>
+      </a>
+
+      <h2 class="text-2xl font-bold">SYNOPSIS</h2>
+      <p>
+        <LBU href="/posts">
+          sportshead <span class="font-semibold">posts</span> list [<span class="underline"
+            >page</span
+          >]
+        </LBU>
+        <br />
+        <LBU href="/search">
+          sportshead <span class="font-semibold">posts search</span> [<span class="underline"
+            >keywords ...</span
+          >]
+        </LBU>
+        <br />
+        <LBU href="/tags">
+          sportshead <span class="font-semibold">tags</span> list
+        </LBU>
+        <br />
+      </p>
+
+      <h2 class="text-2xl font-bold">DESCRIPTION</h2>
+      <p>
+        I'm a student and software developer with a passion for technology and building things. I
+        love contributing to open source and tinkering on my own projects. You can also find me
+        working on CTFs (<LBU href="/tags/ctf" className="decoration-dashed">writeups</LBU>
+         published here!) every now and then. I'm always looking for new challenges to solve and
+        projects to work on in my spare time. My passion is using technology to build cool stuff and
+        make a positive impact.
+      </p>
+
+      <h2 class="text-2xl font-bold">FILES</h2>
+      <p>
+        A few of the projects I'm currently working on/recently worked on. See the <LBU
+          href="/projects"
+        >
+          projects
+        </LBU> page for more.
+      </p>
+      <br />
+      <h3>
+        <LBU href="https://gitlab.wikimedia.org/repos/10nm/ultraviolet">
+          /home/wikipedia/ultraviolet
+        </LBU>
+        <br />
+        <span class="text-sm">
+          ├── <LBU href="https://www.typescriptlang.org/">Typescript</LBU><br />
+           ├── <LBU href="https://webpack.js.org/">Webpack</LBU><br />
+           └── <LBU href="https://m2.material.io/develop/web">Material Design</LBU>
+        </span>
+      </h3>
+      <p>
+        Ultraviolet is a
+        <LBU className="decoration-dashed" href="https://www.mediawiki.org/">MediaWiki</LBU>
+         userscript for patrolling and counter-vandalism. Vandalism on public wikis like Wikipedia
+        is widespread and requires volunteer moderators watching for disruptive edits at all times.
+        Ultraviolet provides a user friendly user interface for performing common moderation tasks
+        to <LBU
+          className="decoration-dashed"
+          href="https://en.wikipedia.org/wiki/Wikipedia:User_scripts/Ranking"
+        >
+          120+ active users
+        </LBU> (as of November 2023).
+      </p>
+      <br />
+      <h3>
+        <LBU href="https://github.com/sportshead/sportshead.dev">/var/www/sportshead.dev</LBU>
+        <br />
+        <span class="text-sm">
+          ├── <LBU href="https://github.com/satnaing/astro-paper">AstroPaper</LBU><br />
+           │&nbsp;&nbsp;&nbsp;├── <LBU href="https://astro.build/">Astro</LBU><br />
+           │&nbsp;&nbsp;&nbsp;└── <LBU href="https://tailwindcss.com/">TailwindCSS</LBU><br />
+           └── <LBU href="https://pages.cloudflare.com/">Cloudflare Pages</LBU>
+        </span>
+      </h3>
+      <p>
+        This blog/portfolio website, built using the AstroPaper template by <LBU
+          href="https://satnaing.dev"
+          className="decoration-dashed"
+        >
+          @satnaing
+        </LBU> and <LBU
+          href="https://github.com/satnaing/astro-paper/graphs/contributors"
+          className="decoration-dashed"
+        >
+          contributors.
+        </LBU> Automatically built and deployed through Cloudflare Pages' Github integration.
+      </p>
+      <br />
+      <h3>
+        <LBU href="https://github.com/sportshead/googlefonts">~/googlefonts</LBU><br />
+        <span class="text-sm">
+          └── <LBU href="https://workers.cloudflare.com/">Cloudflare Workers</LBU><br />
+        </span>
+      </h3>
+      <p>
+        A small Cloudflare Worker to proxy Google Fonts in a privacy-preserving manner. Supports
+        caching proxied fonts/stylesheets and automatically rewriting URLs in returned stylesheets.
+      </p>
+      <br />
+      <h2 class="text-2xl font-bold">SEE ALSO</h2>
+      {
+        // only display if at least one social link is enabled
+        socialCount > 0 && (
+          <div class="social-wrapper">
+            <div class="social-links">Find me on:</div>
+            <Socials />
+          </div>
+        )
+      }
+    </section>
+
+    <Hr />
+
+    {
+      featuredPosts.length > 0 && (
+        <>
+          <section id="featured">
+            <h2>Featured</h2>
+            <ul>
+              {featuredPosts.map(({ data }) => (
+                <Card href={`/posts/${slugify(data)}`} frontmatter={data} secHeading={false} />
+              ))}
+            </ul>
+          </section>
+          <Hr />
+        </>
+      )
+    }
+
+    <section id="recent-posts">
+      <h2>Recent Posts</h2>
+      <ul>
+        {
+          sortedPosts
+            .filter(({ data }) => !data.featured)
+            .map(
+              ({ data }, index) =>
+                index < 4 && (
+                  <Card href={`/posts/${slugify(data)}`} frontmatter={data} secHeading={false} />
+                ),
+            )
+        }
+      </ul>
+      <div class="all-posts-btn-wrapper">
+        <LinkButton href="/posts">
+          All Posts
+          <svg xmlns="http://www.w3.org/2000/svg"
+            ><path
+              d="m11.293 17.293 1.414 1.414L19.414 12l-6.707-6.707-1.414 1.414L15.586 11H6v2h9.586z"
+            ></path>
+          </svg>
+        </LinkButton>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  /* ===== Hero Section ===== */
+  #hero {
+    @apply pb-6 pt-8;
+  }
+  #hero h1 {
+    @apply my-4 inline-block text-3xl font-bold sm:my-8 sm:text-5xl;
+  }
+  #hero .rss-link {
+    @apply mb-6;
+  }
+  #hero .rss-icon {
+    @apply mb-2 h-6 w-6 scale-110 fill-skin-accent sm:mb-3 sm:scale-125;
+  }
+  #hero p {
+    @apply my-2;
+  }
+  .social-wrapper {
+    @apply flex flex-col sm:flex-row sm:items-center;
+  }
+  .social-links {
+    @apply mb-1 mr-2 whitespace-nowrap sm:mb-0;
+  }
+
+  /* ===== Featured & Recent Posts Sections ===== */
+  #featured,
+  #recent-posts {
+    @apply pb-6 pt-12;
+  }
+  #featured h2,
+  #recent-posts h2 {
+    @apply text-2xl font-semibold tracking-wide;
+  }
+  .all-posts-btn-wrapper {
+    @apply my-8 text-center;
+  }
+</style>

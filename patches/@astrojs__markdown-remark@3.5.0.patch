@@ -1,0 +1,40 @@
+diff --git a/dist/shiki.js b/dist/shiki.js
+index b8d44b5640daa4f885061e6d2a7666bc5b9d31e5..41bf89fe4885886ecbf76eef01063ec3c5b271a9 100644
+--- a/dist/shiki.js
++++ b/dist/shiki.js
+@@ -31,6 +31,18 @@ async function createShikiHighlighter({
+   const loadedLanguages = highlighter.getLoadedLanguages();
+   return {
+     highlight(code, lang = "plaintext", options) {
++      // hackmd style modifiers
++      // lang! autowrap
++      // lang=<start> numbered
++      let forceWrap = false;
++      const lineNumberMatch = lang.match(/(.+)=(\d*)$/);
++      if (lang.substring(lang.length - 1) === "!") {
++        lang = lang.substring(0, lang.length - 1);
++        forceWrap = true;
++      } else if (lineNumberMatch) {
++        lang = lineNumberMatch[1];
++      }
++
+       if (lang !== "plaintext" && !loadedLanguages.includes(lang)) {
+         console.warn(`[Shiki] The language "${lang}" doesn't exist, falling back to "plaintext".`);
+         lang = "plaintext";
+@@ -45,12 +57,12 @@ async function createShikiHighlighter({
+             if (inline) {
+               node.tagName = "code";
+             }
+-            const classValue = node.properties.class ?? "";
+-            const styleValue = node.properties.style ?? "";
++            const classValue = (node.properties.class ?? "") + (lineNumberMatch ? " numbered" : "");
++            const styleValue = (node.properties.style ?? "") + (lineNumberMatch ? `; --start: ${lineNumberMatch[2] || "1"}` : "");
+             node.properties.class = classValue.replace(/shiki/g, "astro-code");
+-            if (wrap === false) {
++            if ((wrap || forceWrap) === false) {
+               node.properties.style = styleValue + "; overflow-x: auto;";
+-            } else if (wrap === true) {
++            } else if ((wrap || forceWrap) === true) {
+               node.properties.style = styleValue + "; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;";
+             }
+           },
