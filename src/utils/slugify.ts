@@ -4,7 +4,11 @@ import type { CollectionEntry } from "astro:content";
 export const slugifyStr = (str: string) => slugger(str);
 
 const slugify = (post: CollectionEntry<"blog">["data"]) =>
-  post.postSlug ? slugger(post.postSlug) : slugger(post.title);
+  `${post.pubDatetime.getUTCFullYear()}/${(post.pubDatetime.getUTCMonth() + 1)
+    .toString()
+    .padStart(2, "0")}/${post.pubDatetime.getUTCDate().toString().padStart(2, "0")}/${
+    post.postSlug ? slugger(post.postSlug) : slugger(post.title)
+  }`;
 
 export const slugifyAll = (arr: string[]) => arr.map((str) => slugifyStr(str));
 
