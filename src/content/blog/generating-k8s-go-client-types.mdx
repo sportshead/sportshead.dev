@@ -1,0 +1,238 @@
+---
+pubDatetime: 2024-01-02T00:00:00Z
+title: Generating a Kubernetes Go client using a CustomResourceDefinition (CRD)
+postSlug: generating-k8s-go-client-types
+featured: false
+draft: false
+tags:
+  - hacks
+  - k8s
+description: How to use the kubernetes/code-generator package to generate a typed Go client for a CustomResourceDefinition
+---
+
+Kubernetes is awesome. But documentation for lesser-used parts of the ecosystem isn't as awesome. If you've dug your way through the documentation and managed to create your very own [custom resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/), you might want to now use it in your Go app. But the only documentation for generating Go types for the official k8s client is a [blog post from 2017](https://cloud.redhat.com/blog/kubernetes-deep-dive-code-generation-customresources) linked from the [147 word README](https://github.com/kubernetes/code-generator/blob/723195d1665d8dca615f7a6a08dfc01a9620fde4/README.md), which was last changed on [May 7, 2022](https://github.com/kubernetes/code-generator/commit/361250945a509f73683cdfa1677e8722e8fecb07) to fix a broken link to the aforementioned blog post.
+
+Let's imagine we are trying to organise our song collection with a CRD:
+```yaml=
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: songs.music.sportshead.dev
+spec:
+  group: music.sportshead.dev
+  scope: Namespaced
+  names:
+    plural: songs
+    singular: song
+    kind: Song
+  versions:
+    - name: v1
+      served: true
+      storage: true
+```
+To make sure that other developers can use our song collection, we'll write an OpenAPI schema:
+```yaml=12
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                title:
+                  type: string
+                artist:
+                  type: string
+                rating:
+                  type: integer
+                  enum: [1, 2, 3, 4, 5]
+                genres:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - title
+                - artist
+```
+To start generating code, we need to set some tags for the `code-generator` tool. A tag is a comment in a Go file that looks like this:
+```go
+// +tag-name
+// +tag-name=value
+```
+By convention, our global tags are stored in `pkg/apis/<group>/<version>/doc.go`. For example, our `pkg/apis/music.sportshead.dev/v1/doc.go` would look like this:
+```go=
+// +k8s:deepcopy-gen=package
+
+// Package v1 is the v1 version of the API.
+// +groupName=music.sportshead.dev
+// +groupGoName=CoolMusic
+package v1
+```
+* `k8s:deepcopy-gen` enables registering deepcopy methods for the entire package.
+* `groupName` sets the fully qualified API group name
+* `groupGoName` sets the prefix of the generated Go objects (e.g. `CoolMusicV1Client`)
+
+Now we create a `types.go` file to declare our types. `pkg/apis/music.sportshead.dev/v1/types.go`:
+```go
+package v1
+
+import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Song is a Song resource.
+type Song struct {
+	metav1.TypeMeta `json:",inline"`
+	// Standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+	metav1.ObjectMeta `json:"metadata"`
+
+	Spec SongSpec `json:"spec"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// SongList is a collection of Song resources.
+type SongList struct {
+	metav1.TypeMeta `json:",inline"`
+	// Standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+	metav1.ListMeta `json:"metadata"`
+
+	Items []Song `json:"items"`
+}
+
+// SongSpec is the spec of a Song resource.
+type SongSpec struct {
+	Title  string   `json:"title"`
+	Artist string   `json:"artist"`
+	Rating int      `json:"rating,omitempty"`
+	Genres []string `json:"genres,omitempty"`
+}
+```
+
+We're almost done! Now we create a `register.go` file to tell `code-generator` about our API:
+```go
+package v1
+
+import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+)
+
+const GroupName = "music.sportshead.dev"
+
+// SchemeGroupVersion is a group version used to register these objects
+var SchemeGroupVersion = schema.GroupVersion{Group: GroupName, Version: "v1"}
+
+// Kind takes an unqualified kind and returns a Group qualified GroupKind
+func Kind(kind string) schema.GroupKind {
+	return SchemeGroupVersion.WithKind(kind).GroupKind()
+}
+
+// Resource takes an unqualified resource and returns a Group qualified GroupResource
+func Resource(resource string) schema.GroupResource {
+	return SchemeGroupVersion.WithResource(resource).GroupResource()
+}
+
+var (
+	// SchemeBuilder initializes a scheme builder
+	SchemeBuilder = runtime.NewSchemeBuilder(addKnownTypes)
+	// AddToScheme is a global function that registers this API group & version to a scheme
+	AddToScheme = SchemeBuilder.AddToScheme
+)
+
+// Adds the list of known types to Scheme.
+func addKnownTypes(scheme *runtime.Scheme) error {
+	scheme.AddKnownTypes(SchemeGroupVersion,
+		&Song{},
+		&SongList{},
+	)
+	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
+	return nil
+}
+```
+Change the `GroupName` and add all the types declared in `types.go` to `addKnownTypes`. At this point, your IDE might complain about the lack of `DeepCopyObject()` methods on your types. Luckily, we can generate these methods using the `deepcopy-gen` package. We can create a bash script to generate our clientset and deepcopy code. This script is usually in `hack/update-codegen.sh`:
+```bash=
+#!/usr/bin/env bash
+
+# Modified from https://github.com/kubernetes-sigs/kueue/blob/065451d907fa27a0647436505b3cac38718ef136/hack/update-codegen.sh
+# Apache-2.0, Copyright 2023 The Kubernetes Authors
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+GO_CMD=${1:-go}
+PKG_ROOT=$(realpath "$(dirname ${BASH_SOURCE[0]})/..")
+CODEGEN_PKG=$($GO_CMD list -m -f "{{.Dir}}" k8s.io/code-generator)
+
+cd $PKG_ROOT
+
+source "${CODEGEN_PKG}/kube_codegen.sh"
+
+# TODO: remove the workaround when the issue is solved in code-generator
+# (https://github.com/kubernetes/code-generator/issues/165).
+# kube_codegen.sh expects this layout:
+# .
+# └── github.com
+#     └── sportshead
+#         └── codegen-demo
+# We can use soft links in order to fake this layout, such that
+# ./github.com/sportshead/codegen-demo resolves to ././../codegen-demo, or ./.
+ln -s . github.com
+ln -s .. sportshead
+trap "rm github.com && rm sportshead" EXIT
+
+kube::codegen::gen_helpers \
+  --input-pkg-root github.com/sportshead/codegen-demo/pkg/apis \
+  --boilerplate /dev/null \
+  --output-base "${PKG_ROOT}"
+
+kube::codegen::gen_client \
+  --input-pkg-root github.com/sportshead/codegen-demo/pkg/apis \
+  --output-pkg-root github.com/sportshead/codegen-demo/pkg/generated \
+  --boilerplate /dev/null \
+  --output-base "${PKG_ROOT}" \
+  --with-watch \
+  --with-applyconfig
+
+# clean up temporary libraries added in go.mod by code-generator
+"${GO_CMD}" mod tidy
+```
+Change the package paths as necessary, and set `--boilerplate` to `${PKG_ROOT}/hack/boilerplate.go.txt` if you need licence headers in generated files.
+
+Running `hack/update-codegen.sh` now generates all the code we need to start using our CRD in Go!
+```go
+config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
+if err != nil {
+  panic(err.Error())
+}
+
+musicClient, err := clientset.NewForConfig(config)
+if err != nil {
+  panic(err.Error())
+}
+
+songs, err := musicClient.CoolMusicV1().Songs(*namespace).List(context.TODO(), metav1.ListOptions{})
+if err != nil {
+  panic(err.Error())
+}
+fmt.Printf(`Found %d songs in namespace "%s"`, len(songs.Items), namespace)
+```
+
+All the code in this tutorial can be found at https://github.com/sportshead/codegen-demo. Happy hacking!
+
+References:
+* https://cloud.redhat.com/blog/kubernetes-deep-dive-code-generation-customresources
+* [kubernetes/code-generator/examples/hack/update-codegen.sh](https://github.com/kubernetes/code-generator/blob/723195d1665d8dca615f7a6a08dfc01a9620fde4/examples/hack/update-codegen.sh) - Apache 2.0, The Kubernetes Authors
+* [kubernetes-sigs/kueue/hack/update-codegen.sh](https://github.com/kubernetes-sigs/kueue/blob/065451d907fa27a0647436505b3cac38718ef136/hack/update-codegen.sh) - Apache 2.0, The Kubernetes Authors
+* [kubernetes/sample-controller](https://github.com/kubernetes/sample-controller/tree/d7f638a293b021f315bb42189cc974b4c043dc26/pkg/apis/samplecontroller) - Apache 2.0, The Kubernetes Authors
