@@ -77,7 +77,7 @@ package v1
 * `groupGoName` sets the prefix of the generated Go objects (e.g. `CoolMusicV1Client`)
 
 Now we create a `types.go` file to declare our types. `pkg/apis/music.sportshead.dev/v1/types.go`:
-```go
+```go=
 package v1
 
 import (
@@ -119,7 +119,7 @@ type SongSpec struct {
 ```
 
 We're almost done! Now we create a `register.go` file to tell `code-generator` about our API:
-```go
+```go=
 package v1
 
 import (
@@ -208,6 +208,16 @@ kube::codegen::gen_client \
 # clean up temporary libraries added in go.mod by code-generator
 "${GO_CMD}" mod tidy
 ```
+**Note:** You may need to create a `hack/codegen.go` file with the following to stop `go mod tidy` from removing `k8s.io/code-generator`:
+```go=
+package hack
+
+// Keep a reference to code-generator so it's not removed by go mod tidy
+import (
+	_ "k8s.io/code-generator"
+)
+```
+
 Change the package paths as necessary, and set `--boilerplate` to `${PKG_ROOT}/hack/boilerplate.go.txt` if you need licence headers in generated files.
 
 Running `hack/update-codegen.sh` now generates all the code we need to start using our CRD in Go!
