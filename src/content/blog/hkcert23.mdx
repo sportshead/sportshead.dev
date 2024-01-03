@@ -9,6 +9,7 @@ tags:
   - hkcert
 description: Writeup of 8 different challenges from the HKCERT 2023 CTF.
 ---
+import Alert, { DefaultAlertTypes } from "@components/Alert.astro";
 
 I participated in the [HKCERT 2023 CTF](https://ctf.hkcert.org/) from November 10th to 12th. Our team (O0089 - EzAntiPwn) of 3 placed #8 in the open division, and #15 out of all teams (including international teams).
 ![our team result](https://i.sportshead.dev/u78xrjn.png)
@@ -59,20 +60,13 @@ Got a first blood within 5 minutes as well!
 
 _50 points, 198 solves_
 
-> Flag 1: Can you read the flag from ST Code?
-> Web: http://stcode-3983gi.hkcert23.pwnable.hk:28211 > **Note**: There is a guide for this challenge [here](https://hackmd.io/@blackb6a/hkcert-ctf-2023-ii-en-4e6150a89a1ff32c#ST%E7%A2%BC-I--ST-Code-I-Misc).
+> Flag 1: Can you read the flag from ST Code? \
+> Web: http://stcode-3983gi.hkcert23.pwnable.hk:28211 \
+> **Note**: There is a guide for this challenge [here](https://hackmd.io/@blackb6a/hkcert-ctf-2023-ii-en-4e6150a89a1ff32c#ST%E7%A2%BC-I--ST-Code-I-Misc).
 
-:::success
+<Alert type={DefaultAlertTypes.note}>
 Code used in this solution (and for ST Code II) can be found [on GitHub](https://github.com/sportshead/hkcert23-stcode).
-:::
-
-<div class="font-regular bg-blue-500 text-white relative mb-4 block w-full rounded-lg p-4 text-base leading-5 opacity-100">
-  <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 512 512">
-    {/*Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc.*/}
-    <path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM216 336h24V272H216c-13.3 0-24-10.7-24-24s10.7-24 24-24h48c13.3 0 24 10.7 24 24v88h8c13.3 0 24 10.7 24 24s-10.7 24-24 24H216c-13.3 0-24-10.7-24-24s10.7-24 24-24zm40-208a32 32 0 1 1 0 64 32 32 0 1 1 0-64z" />
-  </svg>
-  Alert with Icon
-</div>
+</Alert>
 
 The guide gives us a big hint:
 ![guide blog post](https://i.sportshead.dev/dm96r8c.png)
@@ -139,12 +133,12 @@ hkcert23{ST_ST&s4_STegan0graphy--STeg0}
 
 _350 points, 32 solves_
 
-> Flag 2: Can you generate ST Code to read the flag?
+> Flag 2: Can you generate ST Code to read the flag? \
 > Web: http://stcode-3983gi.hkcert23.pwnable.hk:28211
 
-:::success
-Code used in this solution (and for ST Code I) can be found [on GitHub](https://github.com/sportshead/hkcert23-stcode).
-:::
+<Alert type={DefaultAlertTypes.note}>
+  Code used in this solution (and for ST Code I) can be found [on GitHub](https://github.com/sportshead/hkcert23-stcode).
+</Alert>
 
 Navigating to [`/flag2`](http://stcode-3983gi.hkcert23.pwnable.hk:28211/flag2) presents us with the challenge:
 ![image](https://i.sportshead.dev/ks4skiu.png)
@@ -347,10 +341,10 @@ Flag: `hkcert23{ST_ST&s4_Speeeeeeed_&_Tricks--cksckscks}`
 
 _100 points, 132 solves_
 
-> Someone complained that XSS challenges are hard. We hear your opinion.
-> You can inject any external javascript from `https://pastebin.com` as you like using the `src` parameter in the query string. Good luck!
-> Web: http://babyxss-k7ltgk.hkcert23.pwnable.hk:28232?src=https://pastebin.com/xNRmEBhV
-> Attachment: [babyxss-again_a576f2579a020c0d546f8fd2acb33318.zip](https://file.hkcert23.pwnable.hk/babyxss-again_a576f2579a020c0d546f8fd2acb33318.zip) > **Note**: There is a guide for this challenge [here](https://hackmd.io/@blackb6a/hkcert-ctf-2023-ii-en-4e6150a89a1ff32c#%E5%8F%88%E6%9C%89%E5%AF%B6%E8%B2%9D-XSS--Baby-XSS-again-Web).
+> Someone complained that XSS challenges are hard. We hear your opinion. \
+> You can inject any external javascript from `https://pastebin.com` as you like using the `src` parameter in the query string. Good luck! \
+> Web: http://babyxss-k7ltgk.hkcert23.pwnable.hk:28232?src=https://pastebin.com/xNRmEBhV \
+> Attachment: [babyxss-again_a576f2579a020c0d546f8fd2acb33318.zip](https://file.hkcert23.pwnable.hk/babyxss-again_a576f2579a020c0d546f8fd2acb33318.zip) > **Note**: There is a guide for this challenge [here](https://hackmd.io/@blackb6a/hkcert-ctf-2023-ii-en-4e6150a89a1ff32c#%E5%8F%88%E6%9C%89%E5%AF%B6%E8%B2%9D-XSS--Baby-XSS-again-Web). \
 
 Once again, the guide tells us what to do:
 ![screenshot of blog post](https://i.sportshead.dev/bwmbipv.png)
@@ -372,7 +366,7 @@ Flag: `hkcert23{pastebin_0r_trashbin}`
 
 _350 points, 8 solves_
 
-> WebService: http://chal-a.hkcert23.pwnable.hk:28320 , http://chal-b.hkcert23.pwnable.hk:28320
+> WebService: http://chal-a.hkcert23.pwnable.hk:28320, http://chal-b.hkcert23.pwnable.hk:28320 \
 > Attachment: [json2csv_7f0a166574d46a7752db8d81b337f612.zip](https://file.hkcert23.pwnable.hk/json2csv_7f0a166574d46a7752db8d81b337f612.zip)
 
 Now we're getting into the harder challenges. Navigating to the webservice shows us a simple UI with an input field, and command line options field.
@@ -437,12 +431,12 @@ app.listen(PORT, HOST, () => {
 
 The most interesting call is to [`child_process.spawnSync`](https://nodejs.org/api/child_process.html#child_processspawnsynccommand-args-options) on line 22. The nodejs documentation tells us the following:
 
-> The `child_process.spawnSync()` method is generally identical to `child_process.spawn()` ...
+> The `child_process.spawnSync()` method is generally identical to `child_process.spawn()` ... \
 > **If the `shell` option is enabled, do not pass unsanitized user input to this function. Any input containing shell metacharacters may be used to trigger arbitrary command execution.**
 
 Unfortunately for us, the `shell` option is `false` by default, meaning we'll need to find an attack vector through the `json2csv` command. Let's check the documentation on `npmjs.com`:
 
-> Fast and highly configurable JSON to CSV converter. It fully support conversion following the RFC4180 specification as well as other similar text delimited formats as TSV.
+> Fast and highly configurable JSON to CSV converter. It fully support conversion following the RFC4180 specification as well as other similar text delimited formats as TSV. \
 > `@json2csv/cli` makes `json2csv` usable as a command line tool.
 
 We can also see from the command line options that we can write to arbritrary files (this will be useful later):
@@ -532,8 +526,8 @@ With only 8 solves, I personally think this challenge should have been given a b
 
 _250 points, 49 solves_
 
-> Can you escape from Shibuya?
-> `nc chal.hkcert23.pwnable.hk 28225`
+> Can you escape from Shibuya? \
+> `nc chal.hkcert23.pwnable.hk 28225` \
 > Attachment: [mongojail_29b79657d01916b2653c9388d76a53b9.zip](https://file.hkcert23.pwnable.hk/mongojail_29b79657d01916b2653c9388d76a53b9.zip) > **Note**: There is a guide for this challenge [here](https://hackmd.io/@blackb6a/hkcert-ctf-2023-ii-en-4e6150a89a1ff32c#%E7%8D%84%E9%96%80%E7%96%86--MongoJail-Pwn).
 
 First let's try connecting to the challenge server.
