@@ -41,7 +41,7 @@ export const SOCIALS: SocialObjects = [
     name: "Keybase",
     href: "https://keybase.io/sportshead",
     linkTitle: "@sportshead on Keybase",
-    active: true,
+    active: false,
   },
   {
     name: "PGP",
