@@ -32,6 +32,12 @@ export const SOCIALS: SocialObjects = [
     active: true,
   },
   {
+    name: "Mastodon",
+    href: "https://ieji.de/@sportshead",
+    linkTitle: "@sportshead@ieji.de",
+    active: true,
+  },
+  {
     name: "Keybase",
     href: "https://keybase.io/sportshead",
     linkTitle: "@sportshead on Keybase",

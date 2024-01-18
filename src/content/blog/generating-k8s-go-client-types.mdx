@@ -13,6 +13,7 @@ description: How to use the kubernetes/code-generator package to generate a type
 Kubernetes is awesome. But documentation for lesser-used parts of the ecosystem isn't as awesome. If you've dug your way through the documentation and managed to create your very own [custom resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/), you might want to now use it in your Go app. But the only documentation for generating Go types for the official k8s client is a [blog post from 2017](https://cloud.redhat.com/blog/kubernetes-deep-dive-code-generation-customresources) linked from the [147 word README](https://github.com/kubernetes/code-generator/blob/723195d1665d8dca615f7a6a08dfc01a9620fde4/README.md), which was last changed on [May 7, 2022](https://github.com/kubernetes/code-generator/commit/361250945a509f73683cdfa1677e8722e8fecb07) to fix a broken link to the aforementioned blog post.
 
 Let's imagine we are trying to organise our song collection with a CRD:
+
 ```yaml=
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -30,7 +31,9 @@ spec:
       served: true
       storage: true
 ```
+
 To make sure that other developers can use our song collection, we'll write an OpenAPI schema:
+
 ```yaml=12
   versions:
     - name: v1
@@ -58,12 +61,16 @@ To make sure that other developers can use our song collection, we'll write an O
                 - title
                 - artist
 ```
+
 To start generating code, we need to set some tags for the `code-generator` tool. A tag is a comment in a Go file that looks like this:
+
 ```go
 // +tag-name
 // +tag-name=value
 ```
+
 By convention, our global tags are stored in `pkg/apis/<group>/<version>/doc.go`. For example, our `pkg/apis/music.sportshead.dev/v1/doc.go` would look like this:
+
 ```go=
 // +k8s:deepcopy-gen=package
 
@@ -72,11 +79,13 @@ By convention, our global tags are stored in `pkg/apis/<group>/<version>/doc.go`
 // +groupGoName=CoolMusic
 package v1
 ```
-* `k8s:deepcopy-gen` enables registering deepcopy methods for the entire package.
-* `groupName` sets the fully qualified API group name
-* `groupGoName` sets the prefix of the generated Go objects (e.g. `CoolMusicV1Client`)
+
+- `k8s:deepcopy-gen` enables registering deepcopy methods for the entire package.
+- `groupName` sets the fully qualified API group name
+- `groupGoName` sets the prefix of the generated Go objects (e.g. `CoolMusicV1Client`)
 
 Now we create a `types.go` file to declare our types. `pkg/apis/music.sportshead.dev/v1/types.go`:
+
 ```go=
 package v1
 
@@ -119,6 +128,7 @@ type SongSpec struct {
 ```
 
 We're almost done! Now we create a `register.go` file to tell `code-generator` about our API:
+
 ```go=
 package v1
 
@@ -160,7 +170,9 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	return nil
 }
 ```
+
 Change the `GroupName` and add all the types declared in `types.go` to `addKnownTypes`. At this point, your IDE might complain about the lack of `DeepCopyObject()` methods on your types. Luckily, we can generate these methods using the `deepcopy-gen` package. We can create a bash script to generate our clientset and deepcopy code. This script is usually in `hack/update-codegen.sh`:
+
 ```bash=
 #!/usr/bin/env bash
 
@@ -208,7 +220,9 @@ kube::codegen::gen_client \
 # clean up temporary libraries added in go.mod by code-generator
 "${GO_CMD}" mod tidy
 ```
+
 **Note:** You may need to create a `hack/codegen.go` file with the following to stop `go mod tidy` from removing `k8s.io/code-generator`:
+
 ```go=
 package hack
 
@@ -221,6 +235,7 @@ import (
 Change the package paths as necessary, and set `--boilerplate` to `${PKG_ROOT}/hack/boilerplate.go.txt` if you need licence headers in generated files.
 
 Running `hack/update-codegen.sh` now generates all the code we need to start using our CRD in Go!
+
 ```go
 config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
 if err != nil {
@@ -242,7 +257,8 @@ fmt.Printf(`Found %d songs in namespace "%s"`, len(songs.Items), namespace)
 All the code in this tutorial can be found at https://github.com/sportshead/codegen-demo. Happy hacking!
 
 References:
-* https://cloud.redhat.com/blog/kubernetes-deep-dive-code-generation-customresources
-* [kubernetes/code-generator/examples/hack/update-codegen.sh](https://github.com/kubernetes/code-generator/blob/723195d1665d8dca615f7a6a08dfc01a9620fde4/examples/hack/update-codegen.sh) - Apache 2.0, The Kubernetes Authors
-* [kubernetes-sigs/kueue/hack/update-codegen.sh](https://github.com/kubernetes-sigs/kueue/blob/065451d907fa27a0647436505b3cac38718ef136/hack/update-codegen.sh) - Apache 2.0, The Kubernetes Authors
-* [kubernetes/sample-controller](https://github.com/kubernetes/sample-controller/tree/d7f638a293b021f315bb42189cc974b4c043dc26/pkg/apis/samplecontroller) - Apache 2.0, The Kubernetes Authors
+
+- https://cloud.redhat.com/blog/kubernetes-deep-dive-code-generation-customresources
+- [kubernetes/code-generator/examples/hack/update-codegen.sh](https://github.com/kubernetes/code-generator/blob/723195d1665d8dca615f7a6a08dfc01a9620fde4/examples/hack/update-codegen.sh) - Apache 2.0, The Kubernetes Authors
+- [kubernetes-sigs/kueue/hack/update-codegen.sh](https://github.com/kubernetes-sigs/kueue/blob/065451d907fa27a0647436505b3cac38718ef136/hack/update-codegen.sh) - Apache 2.0, The Kubernetes Authors
+- [kubernetes/sample-controller](https://github.com/kubernetes/sample-controller/tree/d7f638a293b021f315bb42189cc974b4c043dc26/pkg/apis/samplecontroller) - Apache 2.0, The Kubernetes Authors
