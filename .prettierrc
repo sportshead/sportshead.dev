@@ -12,6 +12,12 @@
       "options": {
         "parser": "astro"
       }
+    },
+    {
+      "files": "src/content/blog/*.mdx",
+      "options": {
+        "embeddedLanguageFormatting": "off"
+      }
     }
   ]
 }
