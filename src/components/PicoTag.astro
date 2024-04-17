@@ -1,0 +1,71 @@
+---
+type ButtonStyle = "primary" | "success" | "info" | "warning" | "danger" | "neutral";
+export interface Props {
+  style: ButtonStyle;
+}
+
+const { style } = Astro.props;
+---
+
+<div class={style}>
+  <slot />
+</div>
+<style>
+  div {
+    background: #344675;
+    background-color: #344675;
+    background-image: linear-gradient(to bottom left, #344675, #263148, #344675);
+    background-position: 100% 0;
+    background-size: 210% 210%;
+    border: none;
+    border-radius: 0.4285rem;
+    box-shadow: none;
+    color: #fff;
+    margin: 4px 1px;
+    overflow: hidden;
+    position: relative;
+    transition: all 0.15s ease;
+
+    display: inline-block;
+    font-weight: 600;
+    line-height: 1.35em;
+    text-align: center;
+    user-select: none;
+    vertical-align: middle;
+
+    border-radius: calc(var(--rem) * 0.1428);
+    font-size: calc(var(--rem) * 0.75);
+    padding: 2px 8px;
+  }
+  .primary {
+    background: #5969f6;
+    background-color: #5969f6;
+    background-image: linear-gradient(to bottom left, #5969f6, #5969f6, #5969f6);
+  }
+  .success {
+    background: #00f2c3;
+    background-color: #00f2c3;
+    background-image: linear-gradient(to bottom left, #00f2c3, #0098f0, #00f2c3);
+  }
+  .info {
+    background: #1d8cf8;
+    background-color: #1d8cf8;
+    background-image: linear-gradient(to bottom left, #1d8cf8, #3358f4, #1d8cf8);
+  }
+  .warning {
+    background: #ff8d72;
+    background-color: #ff8d72;
+    background-image: linear-gradient(to bottom left, #ff8d72, #ff6491, #ff8d72);
+  }
+  .danger {
+    background: #fd5d93;
+    background-color: #fd5d93;
+    background-image: linear-gradient(to bottom left, #fd5d93, #ec250d, #fd5d93);
+  }
+  .neutral {
+    background: #fff;
+    background-color: #fff;
+    background-image: linear-gradient(to bottom left, #fff, #fff, #fff);
+    color: #5969f6;
+  }
+</style>

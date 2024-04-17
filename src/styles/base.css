@@ -147,6 +147,10 @@
   .prose code::after {
     display: none;
   }
+
+  h2#end_toc {
+    display: none;
+  }
 }
 
 /* outside the @layer, otherwise tailwind gets rid of it for some reason */

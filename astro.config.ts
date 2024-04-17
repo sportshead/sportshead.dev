@@ -1,7 +1,7 @@
 import { defineConfig } from "astro/config";
 import tailwind from "@astrojs/tailwind";
 import react from "@astrojs/react";
-import remarkToc from "remark-toc";
+import remarkToc, { type Options } from "remark-toc";
 import remarkCollapse from "remark-collapse";
 import sitemap from "@astrojs/sitemap";
 import { SITE } from "./src/config";
@@ -25,7 +25,19 @@ export default defineConfig({
   ],
   markdown: {
     remarkPlugins: [
-      remarkToc,
+      [
+        remarkToc,
+        {
+          skip: "END_TOC",
+          parents: (node) =>
+            node.type === "root" ||
+            // pico challenge title matching
+            (node.type === "mdxJsxFlowElement" &&
+              (<any>node).name === "Fragment" &&
+              (<any>node).attributes[0].name === "slot" &&
+              (<any>node).attributes[0].value === "title"),
+        } as Options,
+      ],
       [
         remarkCollapse,
         {
@@ -49,6 +61,7 @@ export default defineConfig({
         },
       ],
     },
+    smartypants: false,
   },
   vite: {
     optimizeDeps: {

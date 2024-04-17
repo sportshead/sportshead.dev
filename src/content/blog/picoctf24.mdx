@@ -1,0 +1,726 @@
+---
+pubDatetime: 2024-04-03T00:00:00.000Z
+title: picoCTF 2024 Writeup - General Skills (1/5)
+postSlug: picoctf24-general-skills
+featured: true
+draft: false
+tags:
+  - ctf
+  - picoctf
+  - general_skills
+description: Writeup of 9 General Skills challenges from picoCTF 2024.
+extraStylesheets:
+  - "https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700;800&display=swap"
+---
+
+import Pico from "@components/PicoChallenge.astro";
+import Tag from "@components/PicoTag.astro";
+
+This year's picoCTF competition took place from March 12th to March 26th. Our [team of 2](https://play.picoctf.org/teams/10228) solved 43/47 challenges, with a total score of 7325/9225. We achieved 111th place out of 6957 teams globally.
+[![team profile screenshot](https://i.sportshead.dev/iacj2cb.png)](https://play.picoctf.org/teams/10228)
+![leaderboard position](https://i.sportshead.dev/6383tq5.png)
+
+This is the first post out of 5 for picoCTF 2024, one for each of the categories in this year's competition.
+
+- [General Skills](/2024/04/03/picoctf24-general-skills)
+- Cryptography
+- Web
+- Reverse Engineering
+- Binary Exploitation
+
+## Table of contents
+
+## END_TOC
+
+<Pico author="Jeffery John" points={25} flag="picoCTF{s3cur3_c0nn3ct10n_8969f7d3}">
+  <Fragment slot="title">
+    ## Super SSH
+  </Fragment>
+  <Fragment slot="hints">
+    1. [https://linux.die.net/man/1/ssh](https://linux.die.net/man/1/ssh)
+    2. You can try logging in 'as' someone with `<user>`@titan.picoctf.net
+    3. How could you specify the port?
+    4. Remember, passwords are hidden when typed into the shell
+  </Fragment>
+  <Fragment slot="tags">
+    <Tag style="info">picoCTF 2024</Tag>
+    <Tag style="danger">General Skills</Tag>
+    <Tag style="secondary">shell</Tag>
+    <Tag style="secondary">ssh</Tag>
+    <Tag style="secondary">browser_webshell_solvable</Tag>
+  </Fragment>
+  Using a Secure Shell (SSH) is going to be pretty important. \
+  Can you `ssh` as `ctf-player` to `titan.picoctf.net` at port `55352` to get the flag? \
+  You'll also need the password `83dcefb7`. If asked, accept the fingerprint with `yes`. \
+  If your device doesn't have a shell, you can use: https://webshell.picoctf.org \
+  If you're not sure what a shell is, check out our Primer: https://primer.picoctf.com/#_the_shell
+</Pico>
+We can use a simple `ssh` command to connect to the server:
+
+```bash
+$ ssh ctf-player@titan.picoctf.net -p55352
+Host key fingerprint is SHA256:4S9EbTSSRZm32I+cdM5TyzthpQryv5kudRP9PIKT7XQ
++--[ED25519 256]--+
+|        .+=o     |
+|        .+o..    |
+|        o o+ . . |
+|       o o. + o +|
+|        S  o+B.=+|
+|       ....+=+OEo|
+|        .o.o+o+o+|
+|         .o .+ o |
+|           +*.  .|
++----[SHA256]-----+
+ctf-player@titan.picoctf.net's password:
+Welcome ctf-player, here's your flag: picoCTF{s3cur3_c0nn3ct10n_8969f7d3}
+Connection to titan.picoctf.net closed.
+```
+
+<Pico author="Jeffery John" points={50} flag="picoCTF{s@n1t1z3_9539be6b}">
+  <Fragment slot="title">
+    ## Commitment Issues
+  </Fragment>
+  <Fragment slot="hints">
+    1. Version control can help you recover files if you change or lose them!
+    2. Read the chapter on Git from the picoPrimer [here](https://primer.picoctf.org/#_git_version_control)
+    3. You can 'checkout' commits to see the files inside them
+  </Fragment>
+  <Fragment slot="tags">
+    <Tag style="info">picoCTF 2024</Tag>
+    <Tag style="danger">General Skills</Tag>
+    <Tag style="secondary">browser_webshell_solvable</Tag>
+    <Tag style="secondary">git</Tag>
+  </Fragment>
+  I accidentally wrote the flag down. Good thing I deleted it! \
+  You download the challenge files here:
+    * [challenge.zip](https://artifacts.picoctf.net/c_titan/75/challenge.zip)
+</Pico>
+
+Unzipping the challenge file shows us a directory with a `.git` subdirectory:
+
+```bash
+$ unzip challenge.zip
+Archive:  challenge.zip
+   creating: drop-in/
+   creating: drop-in/.git/
+   creating: drop-in/.git/branches/
+  inflating: drop-in/.git/description
+<...>
+   creating: drop-in/.git/refs/
+   creating: drop-in/.git/refs/heads/
+ extracting: drop-in/.git/refs/heads/master
+   creating: drop-in/.git/refs/tags/
+ extracting: drop-in/.git/HEAD
+  inflating: drop-in/.git/config
+   creating: drop-in/.git/objects/
+   creating: drop-in/.git/objects/pack/
+   creating: drop-in/.git/objects/info/
+   creating: drop-in/.git/objects/ed/
+ extracting: drop-in/.git/objects/ed/5937346e2f3d04b2481120ac1eb6fc92e9f975
+   creating: drop-in/.git/objects/eb/
+ extracting: drop-in/.git/objects/eb/fc561e7c4130f03f3a668ce0609195788f1592
+   creating: drop-in/.git/objects/66/
+ extracting: drop-in/.git/objects/66/03cb4ff0c4ea293798c03a32e0d78d5ab12ca2
+   creating: drop-in/.git/objects/d5/
+ extracting: drop-in/.git/objects/d5/52d1ecd2d83fa2e65b6724d1ff73b45a7d59b7
+   creating: drop-in/.git/objects/0c/
+ extracting: drop-in/.git/objects/0c/1ab266b7a3a1cd099bb509f82b7a2d03aecd03
+   creating: drop-in/.git/objects/38/
+ extracting: drop-in/.git/objects/38/99edb7f3110d613c72ad40083fd8feeef703d0
+  inflating: drop-in/.git/index
+ extracting: drop-in/.git/COMMIT_EDITMSG
+   creating: drop-in/.git/logs/
+  inflating: drop-in/.git/logs/HEAD
+   creating: drop-in/.git/logs/refs/
+   creating: drop-in/.git/logs/refs/heads/
+  inflating: drop-in/.git/logs/refs/heads/master
+ extracting: drop-in/message.txt
+```
+
+We can see that there is a `message.txt`, and multiple objects referenced in the `.git/objects` directory. `message.txt`'s contents aren't useful:
+
+```bash
+$ bat message.txt -p
+TOP SECRET
+```
+
+Let's check `git log` to see what's happening:
+
+```bash
+$ git log
+commit 3899edb7f3110d613c72ad40083fd8feeef703d0 (HEAD -> master)
+Author: picoCTF <ops@picoctf.com>
+Date:   Sat Mar 9 21:09:58 2024 +0000
+
+    remove sensitive info
+
+commit 6603cb4ff0c4ea293798c03a32e0d78d5ab12ca2
+Author: picoCTF <ops@picoctf.com>
+Date:   Sat Mar 9 21:09:58 2024 +0000
+
+    create flag
+```
+
+We can checkout the first commit and then get the flag:
+
+```bash
+$ git checkout 6603cb4ff0c4ea293798c03a32e0d78d5ab12ca2
+Note: switching to '6603cb4ff0c4ea293798c03a32e0d78d5ab12ca2'.
+$ bat message.txt -p
+picoCTF{s@n1t1z3_9539be6b}
+```
+
+<Pico author="Jeffery John" points={50} flag="picoCTF{t1m3m@ch1n3_d3161c0f}">
+  <Fragment slot="title">
+    ## Time Machine
+  </Fragment>
+  <Fragment slot="hints">
+    1. The `cat` command will let you read a file, but that won't help you here!
+    2. Read the chapter on Git from the picoPrimer [here](https://primer.picoctf.org/#_git_version_control).
+    3. When committing a file with git, a message can (and should) be included.
+  </Fragment>
+  <Fragment slot="tags">
+    <Tag style="info">picoCTF 2024</Tag>
+    <Tag style="danger">General Skills</Tag>
+    <Tag style="secondary">browser_webshell_solvable</Tag>
+    <Tag style="secondary">git</Tag>
+  </Fragment>
+  What was I last working on? I remember writing a note to help me remember... \
+  You can download the challenge files here:
+  * [challenge.zip](https://artifacts.picoctf.net/c_titan/162/challenge.zip)
+</Pico>
+
+Once again, the zip has a `message.txt` and a `.git` directory:
+
+```bash
+$ unzip challenge.zip
+Archive:  challenge.zip
+   creating: drop-in/
+  inflating: drop-in/message.txt
+   creating: drop-in/.git/
+<...>
+$ cd drop-in
+$ bat message.txt -p
+This is what I was working on, but I'd need to look at my commit history to know why...
+```
+
+Based on the message, we know we need to use `git log`:
+
+```bash
+$ git log
+commit 3339c144a0c78dc2fbd3403d2fb37d3830be5d94 (HEAD -> master)
+Author: picoCTF <ops@picoctf.com>
+Date:   Sat Mar 9 21:10:22 2024 +0000
+
+    picoCTF{t1m3m@ch1n3_d3161c0f}
+```
+
+<Pico author="Jeffery John" points={75} flag="picoCTF{@sk_th3_1nt3rn_b64c4705}">
+  <Fragment slot="title">
+    ## Blame Game
+  </Fragment>
+  <Fragment slot="hints">
+    1. In collaborative projects, many users can make many changes. How can you see the changes within one file?
+    2. Read the chapter on Git from the picoPrimer [here](https://primer.picoctf.org/#_git_version_control).
+    3. You can use `python3 <file>.py` to try running the code, though you won't need to for this challenge.
+  </Fragment>
+  <Fragment slot="tags">
+   <Tag style="info">picoCTF 2024</Tag>
+   <Tag style="danger">General Skills</Tag>
+   <Tag style="secondary">browser_webshell_solvable</Tag>
+   <Tag style="secondary">git</Tag>
+  </Fragment>
+  Someone's commits seems to be preventing the program from working. Who is it?
+  You can download the challenge files here:
+  * [challenge.zip](https://artifacts.picoctf.net/c_titan/159/challenge.zip)
+</Pico>
+
+This time instead of a `message.txt`, we get a `message.py`:
+
+```bash
+$ unzip challenge.zip
+Archive:  challenge.zip
+   creating: drop-in/
+ extracting: drop-in/message.py
+   creating: drop-in/.git/
+<...>
+$ cd drop-in
+$ bat -p message.py
+print("Hello, World!"
+```
+
+Let's check git log:
+
+```bash
+$ git log
+commit 8cc3930896bb01ae046bc08c382bd30772918ff5 (HEAD -> master)
+Author: picoCTF <ops@picoctf.com>
+Date:   Sat Mar 9 21:09:06 2024 +0000
+
+    important business work
+
+commit 6dbd8d326a2f0c9fe7f0011c8e60448b9accc6ff
+Author: picoCTF <ops@picoctf.com>
+Date:   Sat Mar 9 21:09:06 2024 +0000
+
+    important business work
+
+commit 2e8970529c41058a68aae8bc04ef7a2d53ce0d8a
+Author: picoCTF <ops@picoctf.com>
+Date:   Sat Mar 9 21:09:06 2024 +0000
+
+    important business work
+
+commit 135020e8b96565248b604cb42ae54e256e8fc48a
+Author: picoCTF <ops@picoctf.com>
+Date:   Sat Mar 9 21:09:06 2024 +0000
+
+    important business work
+
+commit a95fbac033f190b3fb1066727ea01d7d4be362b5
+Author: picoCTF <ops@picoctf.com>
+Date:   Sat Mar 9 21:09:06 2024 +0000
+
+    important business work
+
+commit e6b8b174bf1ce6361ff29096579d2752616cb6f2
+Author: picoCTF <ops@picoctf.com>
+Date:   Sat Mar 9 21:09:06 2024 +0000
+
+    important business work
+...
+```
+
+That's a lot of commits! Let's try to `grep` for the flag:
+
+```bash
+$ git log | grep picoCTF{
+Author: picoCTF{@sk_th3_1nt3rn_b64c4705} <ops@picoctf.com>
+```
+
+<Pico author="Jeffery John" points={75} flag="picoCTF{t3@mw0rk_m@k3s_th3_dr3@m_w0rk_6c06cec1}">
+  <Fragment slot="title">
+    ## Collaborative Development
+  </Fragment>
+  <Fragment slot="hints">
+    1. `git branch -a` will let you see available branches
+    2. How can file 'diffs' be brought to the main branch? Don't forget to `git config`!
+    3. Merge conflicts can be tricky! Try a text editor like nano, emacs, or vim.
+  </Fragment>
+  <Fragment slot="tags">
+    <Tag style="info">picoCTF 2024</Tag>
+    <Tag style="danger">General Skills</Tag>
+    <Tag style="secondary">browser_webshell_solvable</Tag>
+    <Tag style="secondary">git</Tag>
+  </Fragment>
+  My team has been working very hard on new features for our flag printing program! I wonder how they'll work together? \
+  You can download the challenge files here:
+  * [challenge.zip](https://artifacts.picoctf.net/c_titan/178/challenge.zip)
+</Pico>
+
+This time, there are multiple branches:
+
+```bash
+$ unzip challenge.zip
+Archive:  challenge.zip
+   creating: drop-in/
+   creating: drop-in/.git/
+<...>
+   creating: drop-in/.git/refs/
+   creating: drop-in/.git/refs/heads/
+ extracting: drop-in/.git/refs/heads/main
+   creating: drop-in/.git/refs/heads/feature/
+ extracting: drop-in/.git/refs/heads/feature/part-1
+ extracting: drop-in/.git/refs/heads/feature/part-2
+ extracting: drop-in/.git/refs/heads/feature/part-3
+<...>
+   creating: drop-in/.git/logs/
+  inflating: drop-in/.git/logs/HEAD
+   creating: drop-in/.git/logs/refs/
+   creating: drop-in/.git/logs/refs/heads/
+  inflating: drop-in/.git/logs/refs/heads/main
+   creating: drop-in/.git/logs/refs/heads/feature/
+  inflating: drop-in/.git/logs/refs/heads/feature/part-1
+  inflating: drop-in/.git/logs/refs/heads/feature/part-2
+  inflating: drop-in/.git/logs/refs/heads/feature/part-3
+  inflating: drop-in/flag.py
+$ cd drop-in
+$ bat -p flag.py
+print("Printing the flag...")
+```
+
+Let's check the contents of `flag.py` in each of the branches:
+
+```bash
+$ git show feature/part-{1..3}:flag.py
+print("Printing the flag...")
+print("picoCTF{t3@mw0rk_", end='')print("Printing the flag...")
+
+print("m@k3s_th3_dr3@m_", end='')print("Printing the flag...")
+
+print("w0rk_6c06cec1}")
+```
+
+Combining the flag strings, we get `picoCTF{t3@mw0rk_m@k3s_th3_dr3@m_w0rk_6c06cec1}`.
+
+<Pico author="Jeffery John" points={100} flag="picoCTF{g00d_gu355_ee8225d0}">
+  <Fragment slot="title">
+    ## Binary Search
+  </Fragment>
+  <Fragment slot="hints">
+    1. Have you ever played hot or cold? Binary search is a bit like that.
+    2. You have a very limited number of guesses. Try larger jumps between numbers!
+    3. The program will randomly choose a new number each time you connect. You can always try again, but you should start your binary search over from the beginning - try around 500. Can you think of why?
+  </Fragment>
+  <Fragment slot="tags">
+    <Tag style="info">picoCTF 2024</Tag>
+    <Tag style="danger">General Skills</Tag>
+    <Tag style="secondary">shell</Tag>
+    <Tag style="secondary">browser_webshell_solvable</Tag>
+    <Tag style="secondary">ls</Tag>
+  </Fragment>
+  Want to play a game? As you use more of the shell, you might be interested in how they work! Binary search is a classic algorithm used to quickly find an item in a sorted list. Can you find the flag? You'll have 1000 possibilities and only 10 guesses. \
+  Cyber security often has a huge amount of data to look through - from logs, vulnerability reports, and forensics. Practicing the fundamentals manually might help you in the future when you have to write your own tools! \
+  You can download the challenge files here:
+  * [challenge.zip](https://artifacts.picoctf.net/c_atlas/4/challenge.zip)
+</Pico>
+
+We can connect to the server and play the game manually:
+
+```bash
+$ ssh -p 54716 ctf-player@atlas.picoctf.net
+The authenticity of host '[atlas.picoctf.net]:54716 ([18.217.83.136]:54716)' can't be established.
+ED25519 key fingerprint is SHA256:M8hXanE8l/Yzfs8iuxNsuFL4vCzCKEIlM/3hpO13tfQ.
++--[ED25519 256]--+
+|                 |
+|         .   .   |
+|  .     . = +    |
+| + o + . = + .   |
+|  = * + S. o  +  |
+| . . + o.ooo+. o |
+|.   .o   +ooo.. .|
+|. . ..o.oo+.oE.o.|
+| . .  ...oo.o= .o|
++----[SHA256]-----+
+This key is not known by any other names.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added '[atlas.picoctf.net]:54716' (ED25519) to the list of known hosts.
+ctf-player@atlas.picoctf.net's password:
+Welcome to the Binary Search Game!
+I'm thinking of a number between 1 and 1000.
+Enter your guess: 500
+Higher! Try again.
+Enter your guess: 750
+Higher! Try again.
+Enter your guess: 875
+Higher! Try again.
+Enter your guess: 940
+Higher! Try again.
+Enter your guess: 970
+Higher! Try again.
+Enter your guess: 990
+Higher! Try again.
+Enter your guess: 1000
+Lower! Try again.
+Enter your guess: 995
+Lower! Try again.
+Enter your guess: 992
+Higher! Try again.
+Enter your guess: 993
+Congratulations! You guessed the correct number: 993
+Here's your flag: picoCTF{g00d_gu355_ee8225d0}
+Connection to atlas.picoctf.net closed.
+```
+
+<Pico author="Nana Ama Atombo-Sackey" points={200} flag="picoCTF{3ndi4n_sw4p_su33ess_817b7cfe}">
+  <Fragment slot="title">
+    ## endianness
+  </Fragment>
+  <Fragment slot="hints">
+    1. You might want to check the ASCII table to first find the hexadecimal representation of characters before finding the endianness.
+    2. Read more about how endianness [here](https://levelup.gitconnected.com/little-endian-and-big-endian-74ab6441b2a7)
+  </Fragment>
+  <Fragment slot="tags">
+    <Tag style="info">picoCTF 2024</Tag>
+    <Tag style="danger">General Skills</Tag>
+    <Tag style="secondary">browser_webshell_solvable</Tag>
+  </Fragment>
+  Know of little and big endian? \
+  [Source](https://artifacts.picoctf.net/c_titan/118/flag.c)
+</Pico>
+
+Again, we can just play the game with the help of cyberchef:
+![using cyberchef to get little endian representation](https://i.sportshead.dev/rm7qy29.png)
+
+```bash
+$ nc titan.picoctf.net 62401
+Welcome to the Endian CTF!
+You need to find both the little endian and big endian representations of a word.
+If you get both correct, you will receive the flag.
+Word: netnd
+Enter the Little Endian representation: 646e74656e
+Correct Little Endian representation!
+Enter the Big Endian representation: 6e65746e64
+Correct Big Endian representation!
+Congratulations! You found both endian representations correctly!
+Your Flag is: picoCTF{3ndi4n_sw4p_su33ess_817b7cfe}
+```
+
+Not sure why this is 200 points.
+
+<Pico author="Loic Shema / syreal" points={300} flag="picoCTF{b4nn3r_gr4bb1n9_su((3sfu11y_68ca8b23}">
+  <Fragment slot="title">
+    ## dont-you-love-banners
+  </Fragment>
+  <Fragment slot="hints">
+    1. Do you know about symlinks?
+    2. Maybe some small password cracking or guessing
+  </Fragment>
+  <Fragment slot="tags">
+    <Tag style="info">picoCTF 2024</Tag>
+    <Tag style="danger">General Skills</Tag>
+    <Tag style="secondary">shell</Tag>
+    <Tag style="secondary">browser_webshell_solvable</Tag>
+  </Fragment>
+  Can you abuse the banner? \
+  The server has been leaking some crucial information on `tethys.picoctf.net 59710`. Use the leaked information to get to the server. \
+  To connect to the running application use `nc tethys.picoctf.net 50678`. From the above information abuse the machine and find the flag in the /root directory.
+</Pico>
+
+Let's see what information is being leaked:
+
+```bash
+$ nc tethys.picoctf.net 59710
+SSH-2.0-OpenSSH_7.6p1 My_Passw@rd_@1234
+```
+
+Seems like the SSH server header and a password. Let's connect to the application:
+
+```bash
+$ nc tethys.picoctf.net 50678
+*************************************
+**************WELCOME****************
+*************************************
+
+what is the password?
+My_Passw@rd_@1234
+What is the top cyber security conference in the world?
+DEFCON
+the first hacker ever was known for phreaking(making free phone calls), who was it?
+John Draper
+player@challenge:~$ ls -la
+ls -la
+total 20
+drwxr-xr-x 1 player player   20 Mar  9 16:39 .
+drwxr-xr-x 1 root   root     20 Mar  9 16:39 ..
+-rw-r--r-- 1 player player  220 Apr  4  2018 .bash_logout
+-rw-r--r-- 1 player player 3771 Apr  4  2018 .bashrc
+-rw-r--r-- 1 player player  807 Apr  4  2018 .profile
+-rw-r--r-- 1 player player  114 Feb  7 17:25 banner
+-rw-r--r-- 1 root   root     13 Feb  7 17:25 text
+```
+
+After quickly googling for the first phreaker, we can get a shell on the server. Let's see what we can find:
+
+```bash
+player@challenge:~$ cat banner
+cat banner
+*************************************
+**************WELCOME****************
+*************************************
+player@challenge:~$ cat text
+cat text
+keep digging
+player@challenge:~$ cd /root
+cd /root
+player@challenge:/root$ ls
+ls
+flag.txt  script.py
+player@challenge:/root$ cat flag.txt
+cat flag.txt
+cat: flag.txt: Permission denied
+player@challenge:/root$ ls -la
+ls -la
+total 16
+drwxr-xr-x 1 root root    6 Mar  9 16:39 .
+drwxr-xr-x 1 root root   29 Mar 12 18:06 ..
+-rw-r--r-- 1 root root 3106 Apr  9  2018 .bashrc
+-rw-r--r-- 1 root root  148 Aug 17  2015 .profile
+-rwx------ 1 root root   46 Mar  9 16:39 flag.txt
+-rw-r--r-- 1 root root 1317 Feb  7 17:25 script.py
+```
+
+Seems like we're meant to read `/root/flag.txt`. Unfortunately, only root has permission to read it. Let's see if there's anything interesting in `script.py`:
+
+```python
+player@challenge:/root$ cat script.py
+cat script.py
+
+import os
+import pty
+
+incorrect_ans_reply = "Lol, good try, try again and good luck\n"
+
+if __name__ == "__main__":
+    try:
+      with open("/home/player/banner", "r") as f:
+        print(f.read())
+    except:
+      print("*********************************************")
+      print("***************DEFAULT BANNER****************")
+      print("*Please supply banner in /home/player/banner*")
+      print("*********************************************")
+
+try:
+    request = input("what is the password? \n").upper()
+    while request:
+        if request == 'MY_PASSW@RD_@1234':
+            text = input("What is the top cyber security conference in the world?\n").upper()
+            if text == 'DEFCON' or text == 'DEF CON':
+                output = input(
+                    "the first hacker ever was known for phreaking(making free phone calls), who was it?\n").upper()
+                if output == 'JOHN DRAPER' or output == 'JOHN THOMAS DRAPER' or output == 'JOHN' or output== 'DRAPER':
+                    scmd = 'su - player'
+                    pty.spawn(scmd.split(' '))
+
+                else:
+                    print(incorrect_ans_reply)
+            else:
+                print(incorrect_ans_reply)
+        else:
+            print(incorrect_ans_reply)
+            break
+
+except:
+    KeyboardInterrupt
+```
+
+The program opens `/home/player/banner` and outputs it at the start. Based on the hint, we know that we are meant to use symlinks. If we can change `/home/player/banner` to be a symlink, we can point it to `/root/flag.txt` and cause the program to read it for us.
+
+```bash
+player@challenge:/proc$ cd ~
+cd ~
+player@challenge:~$ ls -l
+ls -l
+total 8
+-rw-r--r-- 1 player player 114 Feb  7 17:25 banner
+-rw-r--r-- 1 root   root    13 Feb  7 17:25 text
+player@challenge:~$ rm banner
+rm banner
+player@challenge:~$ ln -s /root/flag.txt banner
+ln -s /root/flag.txt banner
+player@challenge:~$ ll
+ll
+total 20
+drwxr-xr-x 1 player player   41 Mar 12 18:16 ./
+drwxr-xr-x 1 root   root     20 Mar  9 16:39 ../
+-rw------- 1 player player    5 Mar 12 18:11 .bash_history
+-rw-r--r-- 1 player player  220 Apr  4  2018 .bash_logout
+-rw-r--r-- 1 player player 3771 Apr  4  2018 .bashrc
+-rw-r--r-- 1 player player  807 Apr  4  2018 .profile
+lrwxrwxrwx 1 player player   14 Mar 12 18:16 banner -> /root/flag.txt*
+-rw-r--r-- 1 root   root     13 Feb  7 17:25 text
+player@challenge:~$ ^[
+```
+
+And now if we connect to the server again:
+
+```bash
+$ nc tethys.picoctf.net 50678
+picoCTF{b4nn3r_gr4bb1n9_su((3sfu11y_68ca8b23}
+
+what is the password?
+^C
+```
+
+<Pico author="syreal" points={400} flag="picoCTF{7h15_mu171v3r53_15_m4dn355_36a674c0}">
+  <Fragment slot="title">
+    ## SansAlpha
+  </Fragment>
+  <Fragment slot="hints">
+    1. Where can you get some letters?
+  </Fragment>
+  <Fragment slot="tags">
+    <Tag style="info">picoCTF 2024</Tag>
+    <Tag style="danger">General Skills</Tag>
+    <Tag style="secondary">bash</Tag>
+    <Tag style="secondary">shell</Tag>
+    <Tag style="secondary">browser_webshell_solvable</Tag>
+    <Tag style="secondary">shell_escape</Tag>
+  </Fragment>
+  The Multiverse is within your grasp! Unfortunately, the server that contains the secrets of the multiverse is in a universe where keyboards only have numbers and (most) symbols. \
+  `ssh -p 50115 ctf-player@mimas.picoctf.net` \
+  Use password: `83dcefb7`
+</Pico>
+
+Connecting to the server puts us into a bash jail, with all letters being blocked:
+
+```bash
+SansAlpha$ a
+SansAlpha: Unknown character detected
+SansAlpha$ A
+SansAlpha: Unknown character detected
+SansAlpha$ ""
+bash: : command not found
+```
+
+Let's see what files are in the current directory:
+
+```bash
+SansAlpha$ **
+bash: blargh: command not found
+
+SansAlpha$ **/*
+bash: blargh/flag.txt: Permission denied
+```
+
+Seems like we will need to read `blargh/flag.txt` somehow. But how can we use `cat` without using the letters `c`, `a`, and `t`? A quick google search brings us to a page called [launch bash without using any letters](https://www.commandlinefu.com/commands/view/11704/launch-bash-without-using-any-letters). The second answer uses a redirection of a bash "command not found" error message to stdout, then using brace expressions to extract the `bash` string from the start.
+Using this method, we can get a bunch of letters into a variable:
+
+```bash
+SansAlpha$ _1="$(- 2>&1)"
+bash: warning: setlocale: LC_ALL: cannot change locale (en_US.UTF-8)
+
+SansAlpha$ "$_1"
+bash: bash: -: command not found: command not found
+```
+
+Now that we have `bash: -: command not found: command not found`, we have enough letters to use `cat`. We can use ["Substring Expansion"](https://www.gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html) in order to extract each letter that we need, in the form `${parameter:offset:length}`.
+
+Here are the characters we need:
+
+- `c` at position 9
+- `a` at position 1
+- `t` at position 19
+
+Putting it together:
+
+```bash
+SansAlpha$ _2="${_1:9:1}${_1:1:1}${_1:19:1}"
+SansAlpha$ $_2 **/*
+return 0 picoCTF{7h15_mu171v3r53_15_m4dn355_36a674c0}Alpha-9, a distinctive layer within the Calastran multiverse, stands as a
+sanctuary realm offering individuals a rare opportunity for rebirth and
+introspection. Positioned as a serene refuge between the higher and lower
+Layers, Alpha-9 serves as a cosmic haven where beings can start anew,
+unburdened by the complexities of their past lives. The realm is characterized
+by ethereal landscapes and soothing energies that facilitate healing and
+self-discovery. Quantum Resonance Wells, unique to Alpha-9, act as conduits for
+individuals to reflect on their past experiences from a safe and contemplative
+distance. Here, time flows differently, providing a respite for those seeking
+solace and renewal. Residents of Alpha-9 find themselves surrounded by an
+atmosphere of rejuvenation, encouraging personal growth and the exploration of
+untapped potential. While the layer offers a haven for introspection, it is not
+without its challenges, as individuals must confront their past and navigate
+the delicate equilibrium between redemption and self-acceptance within this
+tranquil cosmic retreat.
+```
+
+And this is proof that any device is good enough for CTFs:
+
+<img src="https://i.sportshead.dev/g4gz2jh.jpg" alt="screenshot of termius on mobile solved" style="width: 300px" />
+
+## Conclusion
+
+Overall, this year's General Skills challenges were very underwhelming. The only one that I enjoyed was SansAlpha, which taught me how to use bash error strings to construct commands.
+I felt that this category was acting like a git tutorial this year and I would loved to have see some more creative and interesting challenges. I also felt that a lot of the challenges
+in this category suffered from point inflation, and did not accurately reflect the difficulty of these challenges.

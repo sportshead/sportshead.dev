@@ -11,6 +11,7 @@ export interface Props {
   description?: string;
   ogImage?: string;
   canonicalURL?: string;
+  extraStylesheets?: string[];
 }
 
 const {
@@ -19,6 +20,7 @@ const {
   description = SITE.desc,
   ogImage = SITE.ogImage,
   canonicalURL = new URL(Astro.url.pathname, Astro.site).href,
+  extraStylesheets = [],
 } = Astro.props;
 
 const socialImageURL = new URL(ogImage ?? SITE.ogImage ?? "og.png", Astro.url.origin).href;
@@ -58,6 +60,7 @@ const socialImageURL = new URL(ogImage ?? SITE.ogImage ?? "og.png", Astro.url.or
       href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap"
       rel="stylesheet"
     />
+    {extraStylesheets.map((href) => <link href={href} rel="stylesheet" />)}
 
     <meta name="theme-color" content="" />
 

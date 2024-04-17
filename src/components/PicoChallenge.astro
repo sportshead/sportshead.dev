@@ -1,0 +1,409 @@
+---
+export interface Props {
+  author: string;
+  points: number;
+  flag: string;
+}
+
+const { author, points, flag } = Astro.props;
+---
+
+<div class="problem-modal not-prose" role="document">
+  <div class="modal-content">
+    <div class="modal-body">
+      <button disabled class="close-button" aria-hidden="true"
+        ><svg
+          aria-hidden="true"
+          focusable="false"
+          data-prefix="fas"
+          data-icon="xmark"
+          class="close-button-svg"
+          role="img"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 384 512"
+          ><path
+            fill="currentColor"
+            d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"
+          ></path></svg
+        ></button
+      >
+      <div class="title-container row">
+        <slot name="title" />
+        <div class="points">{points} points</div>
+      </div>
+      <div class="tag-buttons-container row">
+        <div class="tag-buttons">
+          Tags:
+          <slot name="tags" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="left-col">
+          <p class="author">Author: {author}</p>
+          <h4>Description</h4>
+          <div class="description">
+            <slot />
+          </div>
+          <hr />
+          <p class="debug-info"><i>debug info: [yes I even copied this bit]</i></p>
+        </div>
+        <div class="right-col">
+          <h4>Hints</h4>
+          <div class="hint-content">
+            <slot name="hints" />
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-group">
+          <div class="input-group-prepend">
+            <span class="input-group-text"
+              ><svg
+                aria-hidden="true"
+                focusable="false"
+                data-prefix="far"
+                data-icon="flag"
+                class="flag-icon"
+                role="img"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 448 512"
+                ><path
+                  fill="currentColor"
+                  d="M48 24C48 10.7 37.3 0 24 0S0 10.7 0 24V64 350.5 400v88c0 13.3 10.7 24 24 24s24-10.7 24-24V388l80.3-20.1c41.1-10.3 84.6-5.5 122.5 13.4c44.2 22.1 95.5 24.8 141.7 7.4l34.7-13c12.5-4.7 20.8-16.6 20.8-30V66.1c0-23-24.2-38-44.8-27.7l-9.6 4.8c-46.3 23.2-100.8 23.2-147.1 0c-35.1-17.6-75.4-22-113.5-12.5L48 52V24zm0 77.5l96.6-24.2c27-6.7 55.5-3.6 80.4 8.8c54.9 27.4 118.7 29.7 175 6.8V334.7l-24.4 9.1c-33.7 12.6-71.2 10.7-103.4-5.4c-48.2-24.1-103.3-30.1-155.6-17.1L48 338.5v-237z"
+                ></path></svg
+              ></span
+            >
+          </div><input name="flag" value={flag} disabled type="text" class="form-control" />
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+  .form-control {
+    margin: 0;
+    overflow: visible;
+    font-family:
+      Open Sans,
+      Segoe UI,
+      Tahoma,
+      sans-serif;
+    font-weight: 400;
+    height: calc(2.25rem + 2px);
+    line-height: 1.42857;
+    display: block;
+    box-shadow: none;
+    background-clip: padding-box;
+    background-color: #0000;
+    border: 1px solid #cad1d7;
+    font-size: calc(var(--rem) * 0.75);
+    border-radius: calc(var(--rem) * 0.4285);
+    flex: 1 1 auto;
+    margin-bottom: 0;
+    position: relative;
+    width: 1%;
+    padding: 10px 18px;
+    border-color: #1d253b80;
+    color: #222a42;
+    border-bottom-left-radius: 0;
+    border-top-left-radius: 0;
+    border-left: 0;
+    cursor: text;
+  }
+  .input-group {
+    margin: 0 var(--rem);
+    margin-bottom: 10px;
+    position: relative;
+
+    align-items: stretch;
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .input-group-prepend {
+    border: 0;
+    margin-right: 0;
+    display: flex;
+  }
+  .input-group-text {
+    line-height: 1;
+
+    align-items: center;
+    display: flex;
+    font-size: calc(var(--rem) * 0.875);
+    font-weight: 400;
+    text-align: center;
+    white-space: nowrap;
+    background-color: initial;
+    border: 1px solid #2b3553;
+    border-radius: calc(var(--rem) * 0.4285);
+    margin: 0;
+    border-bottom-right-radius: 0;
+    border-top-right-radius: 0;
+    border-color: #1d253b80;
+    color: #1d253b;
+    border-right: none;
+    padding: 10px 0 10px 18px;
+  }
+
+  .flag-icon {
+    overflow: visible;
+    box-sizing: content-box;
+    height: 1em;
+    display: inline-block;
+    touch-action: none;
+  }
+  .hint-content {
+    color: #212121;
+    font-size: calc(var(--rem) * 0.75);
+    overflow-wrap: break-word !important;
+    word-break: break-word !important;
+  }
+  .problem-modal :global(ol) {
+    margin-top: 0;
+    margin-bottom: var(--rem);
+    list-style-type: decimal;
+    padding-left: 40px;
+  }
+  .problem-modal :global(ul) {
+    margin-top: 0;
+    margin-bottom: var(--rem);
+    list-style-type: disc;
+    padding-left: 40px;
+  }
+  .problem-modal .hint-content :global(ul) {
+    padding-left: 20px;
+  }
+  .problem-modal :global(li) {
+    color: #1d253b;
+  }
+
+  .debug-info {
+    font-size: calc(var(--rem) * 0.5);
+    cursor: default;
+    color: #fff !important;
+    margin: 0 !important;
+  }
+  .debug-info i::selection {
+    color: #fff !important;
+  }
+  hr {
+    border: 0;
+    border-top: 1px solid #0000001a;
+    margin: var(--rem) 0;
+    box-sizing: initial;
+    height: 0;
+    overflow: visible;
+  }
+
+  .description {
+    font-size: calc(var(--rem) * 0.88889);
+    overflow-wrap: break-word !important;
+    word-break: break-word !important;
+  }
+  .problem-modal :global(code) {
+    color: #f3a4b5;
+    font-size: 87.5%;
+    word-break: break-word;
+    font-family:
+      SFMono-Regular,
+      Menlo,
+      Monaco,
+      Consolas,
+      Liberation Mono,
+      Courier New,
+      monospace;
+  }
+  .problem-modal :global(a),
+  .problem-modal :global(a:active),
+  .problem-modal :global(a:hover),
+  .problem-modal :global(a:link) {
+    font-weight: 400;
+    color: #5969f6;
+    text-decoration: none;
+    background-color: initial;
+  }
+
+  h4 {
+    color: #1d253b;
+    font-size: calc(var(--rem) * 1.11111);
+    margin-bottom: calc(var(--rem) * 0.75);
+    font-stretch: normal;
+    font-style: normal;
+    font-weight: 400;
+    letter-spacing: normal;
+    line-height: 1.25;
+    font-family: inherit;
+    margin-top: 0;
+  }
+  .author {
+    color: #222a42;
+    font-size: calc(var(--rem) * 0.75);
+    text-transform: uppercase !important;
+    margin-bottom: 5px;
+    margin-top: 0;
+  }
+  .left-col,
+  .right-col {
+    padding-left: 15px;
+    padding-right: 15px;
+    position: relative;
+    width: 100%;
+  }
+
+  @media (min-width: 768px) {
+    .left-col {
+      flex: 0 0 66.66667%;
+      max-width: 66.66667%;
+    }
+  }
+  @media (min-width: 768px) {
+    .right-col {
+      flex: 0 0 33.33333%;
+      max-width: 33.33333%;
+    }
+  }
+
+  .title-container {
+    justify-content: space-between !important;
+    display: flex !important;
+  }
+  .tag-buttons-container {
+    margin-bottom: 1rem !important;
+    border-bottom: 0.0625rem solid #e9ecef !important;
+  }
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-left: -15px;
+    margin-right: -15px;
+  }
+  .tag-buttons {
+    padding: 0.5em 1.5em 0.5em 0.9em;
+    white-space: nowrap;
+  }
+
+  .title-container :global(h2) {
+    font-stretch: normal;
+    font-style: normal;
+    font-weight: 400;
+    letter-spacing: normal;
+    line-height: 1.25;
+    font-size: calc(var(--rem) * 1.3333);
+    color: #1d253b;
+    margin-bottom: calc(var(--rem) * 0.25);
+  }
+
+  .points {
+    font-size: calc(var(--rem) * 1.11111);
+    margin-right: var(--rem);
+  }
+
+  .close-button {
+    background: #0000;
+    border-color: #344675;
+    color: #344675;
+    padding-top: 4px;
+    appearance: none;
+    -webkit-appearance: none;
+    border: 0;
+    padding: 0;
+    padding-top: 4px;
+    box-shadow: none;
+    border-radius: calc(var(--rem) * 0.4285);
+    margin: 4px 1px;
+    overflow: hidden;
+    position: relative;
+    float: right;
+    font-size: calc(var(--rem) * 1.3125);
+    margin: 4px 1px;
+    overflow: hidden;
+    position: relative;
+    font-weight: 600;
+    line-height: 1;
+    opacity: 0.5;
+    text-shadow: none;
+    text-align: center;
+    user-select: none;
+    font-family:
+      Open Sans,
+      Segoe UI,
+      Tahoma,
+      sans-serif;
+    text-transform: none;
+  }
+  .close-button-svg {
+    overflow: visible;
+    box-sizing: content-box;
+    display: inline-block;
+    height: 1em;
+    vertical-align: -0.125em;
+    touch-action: none;
+  }
+  .problem-modal {
+    --rem: 18px;
+    margin: calc(var(--rem) * 0.5);
+    pointer-events: none;
+    color: #212121;
+    font-family:
+      Open Sans,
+      Segoe UI,
+      Tahoma,
+      sans-serif;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: normal;
+    font-weight: 400;
+    -moz-osx-font-smoothing: grayscale;
+    font-size: var(--rem);
+    line-height: 1.57;
+    text-align: left;
+
+    width: auto;
+    min-width: 50vw;
+  }
+  @media (min-width: 576px) {
+    .problem-modal {
+      margin: calc(var(--rem) * 1.75) auto;
+      max-width: 500px;
+    }
+  }
+  @media (max-width: 1199.98px) {
+    .problem-modal {
+      min-width: 66vw;
+    }
+  }
+  @media (max-width: 991.98px) {
+    .problem-modal {
+      min-width: 75vw;
+    }
+  }
+
+  @media (min-width: 576px) {
+    .modal-content {
+      box-shadow:
+        0 15px 35px #32325d33,
+        0 5px 15px #0000002b;
+    }
+  }
+  .modal-content {
+    background-clip: padding-box;
+    background-color: #fff;
+    border: 0;
+    border-radius: calc(var(--rem) * 0.2857);
+    box-shadow: 0 10px 50px 0 #00000080;
+    display: flex;
+    flex-direction: column;
+    outline: 0;
+    pointer-events: auto;
+    position: relative;
+    width: 100%;
+  }
+
+  .modal-body {
+    line-height: 1.9;
+    flex: 1 1 auto;
+    padding: 24px 24px 16px;
+    position: relative;
+  }
+</style>
