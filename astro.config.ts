@@ -7,7 +7,6 @@ import sitemap from "@astrojs/sitemap";
 import { SITE } from "./src/config";
 import mdx from "@astrojs/mdx";
 
-import { transformerNotationDiff } from "shikiji-transformers";
 import { bundledLanguages } from "shikiji";
 import { readFile } from "fs/promises";
 
@@ -47,12 +46,12 @@ export default defineConfig({
       ],
     ],
     shikiConfig: {
-      // @ts-expect-error
-      themes: {
+      experimentalThemes: {
         light: "github-light",
         dark: "github-dark",
       },
       wrap: true,
+      // @ts-ignore
       langs: [
         ...Object.keys(bundledLanguages),
         {
@@ -61,7 +60,6 @@ export default defineConfig({
           scopeName: "source.puml",
         },
       ],
-      transformers: [transformerNotationDiff()],
     },
     smartypants: false,
   },

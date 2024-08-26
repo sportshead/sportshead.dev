@@ -48,8 +48,7 @@
     "prettier-plugin-astro": "^0.12.0",
     "prettier-plugin-tailwindcss": "^0.5.4",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "shikiji-transformers": "^0.10.2"
+    "react-dom": "^18.2.0"
   },
   "config": {
     "commitizen": {
@@ -61,16 +60,12 @@
       "prettier --plugin-search-dir=. --write"
     ]
   },
-  "packageManager": "pnpm@9.2.0",
   "engines": {
-    "pnpm": ">=9"
+    "pnpm": ">=8"
   },
   "pnpm": {
     "patchedDependencies": {
       "@astrojs/markdown-remark@3.5.0": "patches/@astrojs__markdown-remark@3.5.0.patch"
-    },
-    "overrides": {
-      "shikiji": "0.10.2"
     }
   }
 }
