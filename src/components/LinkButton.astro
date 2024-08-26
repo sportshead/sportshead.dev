@@ -15,7 +15,6 @@ const { href, className, ariaLabel, title, disabled = false, rel } = Astro.props
   href={disabled ? "#" : href}
   tabindex={disabled ? "-1" : "0"}
   class={`hover:text-skin-accent group inline-block ${className ?? ""}`}
-  aria-label={ariaLabel}
   {...{ "aria-label": ariaLabel, title, "aria-disabled": disabled, rel }}
 >
   <slot />
